@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tango Analytics — Master Asset Dashboard</title>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#F5F5F4;color:#1A1A1A;font-size:14px}
+.hdr{background:#0D2D4E;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:100}
+.hdr-title{color:#fff;font-size:16px;font-weight:500}
+.hdr-sub{color:#7AAED0;font-size:12px;margin-top:2px}
+.hdr-views{display:flex;gap:6px}
+.vbtn{padding:5px 12px;font-size:12px;cursor:pointer;border-radius:8px;border:0.5px solid rgba(255,255,255,0.3);background:transparent;color:rgba(255,255,255,0.7)}
+.vbtn.active{background:rgba(255,255,255,0.15);color:#fff;border-color:rgba(255,255,255,0.6)}
+.vbtn:hover{background:rgba(255,255,255,0.1);color:#fff}
+.wrap{max-width:960px;margin:0 auto;padding:0}
+.stat-row{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;padding:14px 24px;background:#EFEFED;border-bottom:1px solid #E0E0DD}
+.stat{background:#fff;border:0.5px solid #E0E0DD;border-radius:8px;padding:10px 12px}
+.stat-val{font-size:24px;font-weight:500;line-height:1.1}
+.stat-lbl{font-size:11px;color:#777;margin-top:3px}
+.stat-bar{height:3px;border-radius:2px;margin-top:8px;background:#EFEFED}
+.stat-fill{height:100%;border-radius:2px}
+.prog-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:10px 24px;background:#EFEFED;border-bottom:1px solid #E0E0DD}
+.prog-card{background:#fff;border:0.5px solid #E0E0DD;border-radius:8px;padding:10px 12px}
+.prog-lbl{font-size:11px;color:#777;margin-bottom:6px}
+.prog-track{height:5px;background:#EFEFED;border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;border-radius:3px;transition:width .3s}
+.prog-count{font-size:13px;font-weight:500;margin-top:5px}
+.eob{background:#FFEBEE;border-left:4px solid #E24B4A;padding:8px 24px;font-size:12px;color:#791F1F;display:flex;align-items:flex-start;gap:8px;line-height:1.5}
+.filters{padding:12px 24px;border-bottom:1px solid #E0E0DD;background:#fff;position:sticky;top:57px;z-index:99}
+.filter-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-bottom:8px}
+.filter-label{font-size:11px;color:#777;margin-bottom:3px;font-weight:500;text-transform:uppercase;letter-spacing:.04em}
+.filter-grid select{width:100%;height:34px;font-size:12px;padding:0 10px;border:0.5px solid #CDCDC8;border-radius:6px;background:#fff;color:#1A1A1A;cursor:pointer}
+.filter-grid select:focus{outline:none;border-color:#185FA5}
+.search-row{display:flex;gap:8px;align-items:center}
+.search-row input{flex:1;height:34px;font-size:13px;padding:0 12px;border:0.5px solid #CDCDC8;border-radius:6px;background:#fff;color:#1A1A1A}
+.search-row input:focus{outline:none;border-color:#185FA5}
+.result-count{font-size:12px;color:#888;white-space:nowrap}
+.body{padding:0 24px 32px}
+.section-block{margin-top:20px}
+.section-title{font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.08em;padding:0 0 8px;border-bottom:1px solid #E8E8E5;margin-bottom:4px}
+.asset-card{background:#fff;border:0.5px solid #E0E0DD;border-radius:12px;padding:12px 14px;margin-top:6px}
+.asset-top{display:flex;align-items:flex-start;gap:10px}
+.badge{width:26px;height:26px;border-radius:6px;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.b-have{background:#E8F5E9;color:#27500A}
+.b-build{background:#FFF8E1;color:#633806}
+.b-urgent{background:#FFEBEE;color:#791F1F}
+.b-revise{background:#FFF3E0;color:#854F0B}
+.b-review{background:#EEF2F8;color:#1B3A5C}
+.asset-main{flex:1;min-width:0}
+.asset-title{font-size:13px;font-weight:500;line-height:1.45;margin-bottom:5px;color:#1A1A1A}
+.asset-title a{color:#185FA5;text-decoration:none}
+.asset-title a:hover{text-decoration:underline}
+.no-link{color:#888;font-style:italic}
+.tag-internal{background:#FFF8E1;color:#7A5200;border:0.5px solid #F0C040;font-size:10px;padding:1px 6px;border-radius:8px;line-height:1.4}
+.tag-row{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px}
+.tag{font-size:11px;padding:2px 8px;border-radius:10px;line-height:1.4}
+.tag-sf{background:#E1F5EE;color:#085041;border:0.5px solid #9FE1CB}
+.tag-section{background:#F5F5F4;color:#666;border:0.5px solid #E0E0DD}
+.tag-stage{background:#E6F1FB;color:#0C447C;border:0.5px solid #B5D4F4}
+.why-btn{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#888;background:none;border:none;cursor:pointer;padding:0;font-family:inherit}
+.why-btn:hover{color:#333}
+.why-btn i{font-size:12px;transition:transform .15s}
+.why-btn.open i.ti-chevron-down{transform:rotate(180deg)}
+.why-box{font-size:12px;color:#555;line-height:1.6;margin-top:7px;padding:8px 10px;background:#F8F8F6;border-radius:6px;border-left:2px solid #D0D0CB;display:none}
+.why-box.open{display:block}
+.asset-right{flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px;min-width:136px}
+.prog-sel{font-size:11px;height:28px;padding:0 8px;border-radius:6px;border:0.5px solid #CDCDC8;background:#fff;color:#1A1A1A;cursor:pointer;width:100%;font-family:inherit}
+.prog-sel:focus{outline:none;border-color:#185FA5}
+.ps-ready{background:#E8F5E9;color:#27500A;border-color:#9FE1CB}
+.ps-needs{background:#FFF3E0;color:#854F0B;border-color:#FAC775}
+.ps-notbuilt{background:#FFEBEE;color:#791F1F;border-color:#F09595}
+.ps-wip{background:#E6F1FB;color:#0C447C;border-color:#B5D4F4}
+.ps-review{background:#EEF2F8;color:#1B3A5C;border-color:#97B5D8}
+.ps-done{background:#E8F5E9;color:#27500A;border-color:#9FE1CB}
+.asset-meta-block{width:100%;background:#F8F8F6;border-radius:6px;padding:6px 8px;border:0.5px solid #E8E8E5}
+.meta-row{display:flex;align-items:flex-start;gap:5px;font-size:11px;line-height:1.4;color:#666}
+.meta-row+.meta-row{margin-top:4px}
+.meta-icon{color:#AAA;flex-shrink:0;font-size:12px;margin-top:1px}
+.meta-label{color:#AAA;flex-shrink:0;white-space:nowrap}
+.meta-val{color:#666;word-break:break-word}
+.empty-state{padding:48px 0;text-align:center;color:#888}
+.empty-state i{font-size:32px;display:block;margin-bottom:12px;color:#CCC}
+.board-wrap{padding:14px 24px 32px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.board-col-head{font-size:12px;font-weight:500;padding:8px 12px;border-radius:8px 8px 0 0}
+.bh-have{background:#E8F5E9;color:#27500A}
+.bh-urgent{background:#FFEBEE;color:#791F1F}
+.bh-revise{background:#FFF3E0;color:#854F0B}
+.bh-build{background:#FFF8E1;color:#633806}
+.bh-review{background:#EEF2F8;color:#1B3A5C}
+.board-item{background:#fff;border:0.5px solid #E0E0DD;padding:9px 12px;margin-top:4px;border-radius:6px}
+.board-item-name{font-size:12px;font-weight:500;margin-bottom:4px;line-height:1.4;color:#1A1A1A}
+.board-item-name a{color:#185FA5;text-decoration:none}
+.board-item-name a:hover{text-decoration:underline}
+.board-item-date{font-size:11px;color:#888;margin-top:4px}
+.priority-wrap{padding:14px 24px 32px}
+.priority-section{margin-bottom:22px}
+.priority-hdr{font-size:12px;font-weight:500;padding:7px 12px;border-radius:8px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.ph-urgent{background:#FFEBEE;color:#791F1F}
+.ph-revise{background:#FFF3E0;color:#854F0B}
+.priority-card{background:#fff;border:0.5px solid #E0E0DD;border-left:3px solid transparent;border-radius:6px;padding:11px 14px;margin-bottom:6px;display:flex;align-items:flex-start;gap:10px}
+.pc-urgent{border-left-color:#E24B4A}
+.pc-revise{border-left-color:#EF9F27}
+.footer{text-align:center;padding:24px;font-size:11px;color:#AAA;border-top:1px solid #E8E8E5;margin-top:8px}
+@media(max-width:640px){
+  .stat-row{grid-template-columns:repeat(3,1fr)}
+  .filter-grid{grid-template-columns:1fr 1fr 1fr}
+  .board-wrap{grid-template-columns:1fr}
+  .asset-right{min-width:120px}
+  .hdr{padding:12px 16px}
+  .body,.filters,.stat-row,.prog-row,.priority-wrap,.board-wrap{padding-left:16px;padding-right:16px}
+}
+</style>
+<style>.ti{display:inline-block;vertical-align:-0.15em;}</style>
+</head>
+<body>
+<style>
+#pw-gate{position:fixed;inset:0;background:#1B3A5C;display:flex;align-items:center;justify-content:center;z-index:9999}
+#pw-box{background:#fff;border-radius:12px;padding:40px 48px;text-align:center;max-width:380px;width:90%}
+#pw-box h2{margin:0 0 6px;color:#1B3A5C;font-size:20px;font-family:Arial,sans-serif}
+#pw-box p{margin:0 0 24px;color:#666;font-size:13px;font-family:Arial,sans-serif}
+#pw-input{width:100%;box-sizing:border-box;padding:10px 14px;border:1.5px solid #ccc;border-radius:6px;font-size:15px;outline:none;margin-bottom:12px}
+#pw-input:focus{border-color:#2E75B6}
+#pw-btn{width:100%;padding:10px;background:#2E75B6;color:#fff;border:none;border-radius:6px;font-size:15px;font-family:Arial,sans-serif;cursor:pointer;font-weight:600}
+#pw-btn:hover{background:#1B3A5C}
+#pw-err{color:#C45911;font-size:12px;font-family:Arial,sans-serif;margin-top:8px;display:none}
+</style>
+<div id="pw-gate">
+  <div id="pw-box">
+    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='none' stroke='%232E75B6' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='11' width='18' height='11' rx='2'/%3E%3Cpath d='M7 11V7a5 5 0 0 1 10 0v4'/%3E%3C/svg%3E" style="margin-bottom:16px"><br>
+    <h2>Tango Analytics</h2>
+    <p>Master Asset Dashboard &mdash; Internal use only</p>
+    <input id="pw-input" type="password" placeholder="Enter access code" onkeydown="if(event.key==='Enter')checkPw()">
+    <button id="pw-btn" onclick="checkPw()">Access Dashboard</button>
+    <div id="pw-err">Incorrect access code. Try again.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var K='tango-dash-auth';
+  if(sessionStorage.getItem(K)==='1'){document.getElementById('pw-gate').style.display='none';}
+  window.checkPw=function(){
+    var v=document.getElementById('pw-input').value;
+    if(v==='TangoEnable26'){
+      sessionStorage.setItem(K,'1');
+      document.getElementById('pw-gate').style.display='none';
+    } else {
+      document.getElementById('pw-err').style.display='block';
+      document.getElementById('pw-input').value='';
+      document.getElementById('pw-input').focus();
+    }
+  };
+})();
+</script>
+
+<div class="hdr">
+  <div>
+    <div class="hdr-title">Tango Analytics &mdash; Master Asset Dashboard</div>
+    <div class="hdr-sub">All collateral, enablement, E&S, internal, and build priorities &bull; Updated May 2026 &bull; v2</div>
+  </div>
+  <div class="hdr-views">
+    <button class="vbtn active" id="vbtn-list" onclick="setView('list')"><svg class="ti ti-list" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/><line x1="5" y1="6" x2="5" y2="6.01"/><line x1="5" y1="12" x2="5" y2="12.01"/><line x1="5" y1="18" x2="5" y2="18.01"/></svg> List</button>
+    <button class="vbtn" id="vbtn-board" onclick="setView('board')"><svg class="ti ti-layout-columns" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" y1="4" x2="4" y2="20"/><line x1="20" y1="4" x2="20" y2="20"/><rect x="8" y="4" width="8" height="16" rx="1"/></svg> Board</button>
+    <button class="vbtn" id="vbtn-priority" onclick="setView('priority')"><svg class="ti ti-alert-triangle" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4m0 3v.01M2.5 19h19a2 2 0 0 0 1.7-3l-9.5-16a2 2 0 0 0-3.4 0l-9.5 16A2 2 0 0 0 2.5 19"/></svg> EOQ2</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="stat-row" id="stat-row"></div>
+  <div class="prog-row" id="prog-row"></div>
+  <div id="eob" class="eob" style="display:none"><svg class="ti ti-alert-triangle" style="font-size:15px;flex-shrink:0;margin-top:1px" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4m0 3v.01M2.5 19h19a2 2 0 0 0 1.7-3l-9.5-16a2 2 0 0 0-3.4 0l-9.5 16A2 2 0 0 0 2.5 19"/></svg><span id="eob-text"></span></div>
+
+  <div class="filters">
+    <div class="filter-grid">
+      <div><div class="filter-label">Section</div>
+        <select id="f-section" onchange="render()">
+          <option value="">All sections</option>
+          <option value="Retail ICP">Retail ICP</option>
+          <option value="Corporate ICP">Corporate ICP</option>
+          <option value="Landlords / E&S ICP">Landlords / E&S ICP</option>
+          <option value="Internal">Internal enablement</option>
+        </select>
+      </div>
+      <div><div class="filter-label">Lifecycle stage</div>
+        <select id="f-stage" onchange="render()">
+          <option value="">All stages</option>
+          <option value="1">1 &mdash; Awareness</option>
+          <option value="2">2 &mdash; Consideration</option>
+          <option value="3">3 &mdash; Evaluation / Demo</option>
+          <option value="4">4 &mdash; Decision / Proposal</option>
+          <option value="5">5 &mdash; Onboarding</option>
+          <option value="6">6 &mdash; Expansion &amp; Renewal</option>
+        </select>
+      </div>
+      <div><div class="filter-label">Status</div>
+        <select id="f-status" onchange="render()">
+          <option value="">All statuses</option>
+          <option value="have">&#10003; Have it</option>
+          <option value="build">&#9675; Build</option>
+          <option value="urgent">! Urgent / EOQ2</option>
+          <option value="revise">&#9998; Revise</option>
+          <option value="in_review">&#9676; In Review</option>
+        </select>
+      </div>
+      <div><div class="filter-label">Audience</div>
+        <select id="f-aud" onchange="render()">
+          <option value="">All audiences</option>
+          <option value="external">External / Customer</option>
+          <option value="internal">Internal only</option>
+          <option value="both">Both</option>
+        </select>
+      </div>
+      <div><div class="filter-label">Progress</div>
+        <select id="f-progress" onchange="render()">
+          <option value="">All</option>
+          <option value="ready">Ready for use</option>
+          <option value="needs_revision">Needs revision</option>
+          <option value="not_built">Not built yet</option>
+          <option value="in_progress">In progress</option>
+          <option value="done">Done</option>
+          <option value="in_review">In review</option>
+        </select>
+      </div>
+    </div>
+    <div class="search-row">
+      <input type="search" id="search" placeholder="Search asset names..." oninput="render()">
+      <span class="result-count" id="result-count"></span>
+    </div>
+  </div>
+
+  <div id="main"></div>
+
+  <div class="footer">Tango Analytics &bull; Master Asset Dashboard &bull; Progress saved locally in your browser</div>
+</div>
+
+<script>
+const ASSETS=[
+  {id:"r1a1",sec:"Retail ICP",stage:"1",sub:"1 — Awareness",status:"have",name:"Why Retailers Are Losing Control of Their Real Estate Portfolios",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/eBooks%2C%20Guides%2C%20Reports%2C%20Whitepapers/Retail/Tango%20-%20Why%20Retailers%20Are%20Losing%20Control%20of%20Their%20Real%20Estate%20Portfolios.pdf",sf:"1-Prospecting",why:"Open every Retail new logo sequence with this. Cold trigger for CRE leaders at 300+ location brands.",modified:"Apr 27, 2026",loc:"Marketing / Collateral / eBooks / Retail"},
+  {id:"r1a2",sec:"Retail ICP",stage:"1",sub:"1 — Awareness",status:"have",name:"7 Predictions for 2026",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/eBooks%2C%20Guides%2C%20Reports%2C%20Whitepapers/Real%20Estate/Tango%20-%207%20Predictions%20for%20Lease%20Accounting%20and%20Administration%20in%202026.pdf",sf:"1-Prospecting",why:"Nurture content for LinkedIn and email sequences. Keeps Tango visible before the first call.",modified:"Mar 26, 2026",loc:"Marketing / Collateral / eBooks / Real Estate"},
+  {id:"r1a3",sec:"Retail ICP",stage:"1",sub:"1 — Awareness",status:"have",name:"Retail Datasheet",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/Factsheets%20and%20One-Pagers/Real%20Estate/Tango_Datasheet_Tango-Retail.pdf",sf:"1-Prospecting",why:"Quick leave-behind after first outreach. Confirms ICP fit in under 60 seconds.",modified:"—",loc:"Marketing / Collateral / Factsheets"},
+  {id:"r1a4",sec:"Retail ICP",stage:"1",sub:"1 — Awareness",status:"have",name:"2026 Sustainability Strategy",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/eBooks%2C%20Guides%2C%20Reports%2C%20Whitepapers/Energy%20%26%20Sustainability/Tango%20-%20Building%20an%20Effective%20Sustainability%20Strategy%20in%202026.pdf",sf:"1-Prospecting",why:"Best cold opener for E&S angle. Use when CSO or sustainability is in the buying committee.",modified:"—",loc:"Marketing / Collateral / eBooks / E&S"},
+  {id:"r1a5",sec:"Retail ICP",stage:"1",sub:"1 — Awareness",status:"have",name:"AI by Tango — Quick Card",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Product%20Marketing/Sales%20%26%20CX%20Enablement/Enablement%20-%20Quick%20Cards/AI%20by%20Tango%20-%20Quick%20Card.docx",sf:"1-Prospecting",why:"One-page AI capabilities card. Fast credibility signal for AI-forward prospects before the first call.",modified:"Apr 13, 2026",loc:"Marketing / Product Marketing / Enablement Quick Cards"},
+  {id:"r1a6",sec:"Retail ICP",stage:"1",sub:"1 — Awareness",status:"have",name:"Why Retailers Are Losing Control — Sales Enablement Guide",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Product%20Marketing/Sales%20%26%20CX%20Enablement/Marketing%20Campaigns/Retail%20%2B%20Real%20Estate/Why%20Retailers%20Are%20Losing%20Control%20of%20Their%20Real%20Estate%20Portfolios%20Sales%20Enablement.docx",sf:"1-Prospecting",why:"Internal only. Read before sending the eBook — gives talk track and follow-up hooks.",modified:"Apr 27, 2026",loc:"Marketing / Product Marketing / Campaigns / Retail"},
+  {id:"r1a7",sec:"Retail ICP",stage:"1",sub:"1 — Awareness",status:"urgent",name:"AI Lease Abstraction one-pager",url:null,sf:"1-Prospecting",why:"Pilot clients go live now and sellers have nothing to hand them. Build this first.",modified:null,loc:null},
+  {id:"r1a8",sec:"Retail ICP",stage:"2",sub:"2 — Consideration",status:"build",name:"Retail platform ICP narrative",url:null,sf:"2-Qualified",why:"End-to-end story for a 300+ location retailer. Use once ICP fit is confirmed.",modified:null,loc:null},
+  {id:"r1a9",sec:"Retail ICP",stage:"1",sub:"1 — Awareness",status:"build",name:"Retail brand explainer video",url:null,sf:"1-Prospecting",why:"Under 3-min top-of-funnel video. Embeds in email sequences and LinkedIn.",modified:null,loc:null},
+  {id:"r1a10",sec:"Retail ICP",stage:"2",sub:"2 — Consideration",status:"revise",name:"Retail sales deck",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Product%20Marketing/Sales%20%26%20CX%20Enablement/Sales%20Slides/!Slide%20Library.pptx",sf:"2-Qualified",why:"Primary deck for first qualified call. Cut to 12 slides — lead with pain not product.",modified:"May 11, 2026",loc:"Marketing / Product Marketing / Sales Slides"},
+  {id:"r2a1",sec:"Retail ICP",stage:"2",sub:"2 — Consideration",status:"have",name:"Look Before You Lease",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/eBooks%2C%20Guides%2C%20Reports%2C%20Whitepapers/Retail/Tango%20-%20Look%20Before%20You%20Lease.pdf",sf:"3-Discovery",why:"Send before the discovery call to frame lease decision risk. Opens the right questions.",modified:"—",loc:"Marketing / Collateral / eBooks / Retail"},
+  {id:"r2a2",sec:"Retail ICP",stage:"2",sub:"2 — Consideration",status:"have",name:"7 Ways Proprietary Data Drives Better Decisions",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/eBooks%2C%20Guides%2C%20Reports%2C%20Whitepapers/Retail/Tango%20-%207%20Ways%20to%20Use%20Your%20Proprietary%20Data%20In%20Site%20Selection.pdf",sf:"3-Discovery",why:"Pull when site selection or portfolio expansion is mentioned. Natural retail fit.",modified:"—",loc:"Marketing / Collateral / eBooks / Retail"},
+  {id:"r2a3",sec:"Retail ICP",stage:"2",sub:"2 — Consideration",status:"have",name:"FASB ASC 842 series (6 docs)",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/eBooks%2C%20Guides%2C%20Reports%2C%20Whitepapers/Real%20Estate/Lease%20Compliance",sf:"3-Discovery",why:"Deploy the moment compliance comes up. Send the specific doc that matches the objection.",modified:"—",loc:"Marketing / Collateral / Lease Compliance"},
+  {id:"r2a4",sec:"Retail ICP",stage:"2",sub:"2 — Consideration",status:"have",name:"E&S Executive Exchange deck",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/!Rebrand%20Complete/250411-Tango%20Energy%20and%20Sustainability%20-%20ExecutiveEchange-Rebranded.pptx",sf:"3-Discovery",why:"Strongest proof point deck. $600K billing error, $80K credit. Use when E&S surfaces in discovery.",modified:"Apr 11, 2025",loc:"Marketing / Collateral / Rebrand Complete"},
+  {id:"r2a5",sec:"Retail ICP",stage:"2",sub:"2 — Consideration",status:"have",name:"Retailers Guide to Sustainability",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/eBooks%2C%20Guides%2C%20Reports%2C%20Whitepapers/Retail/Tango%20-%20Retailers'%20Guide%20to%20Sustainability.pdf",sf:"3-Discovery",why:"Use with sustainability-focused retailers only. Needs refresh before broad deployment.",modified:"—",loc:"Marketing / Collateral / eBooks / Retail"},
+  {id:"r2a6",sec:"Retail ICP",stage:"2",sub:"2 — Consideration",status:"have",name:"Energy as a Managed Cost",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/eBooks%2C%20Guides%2C%20Reports%2C%20Whitepapers/Energy%20%26%20Sustainability/Tango%20-%20Energy%20as%20a%20Managed%20Cost.pdf",sf:"3-Discovery",why:"Pull when CFO is in the room. Frames energy as a recoverable P&L line.",modified:"May 12, 2026",loc:"Marketing / Collateral / eBooks / E&S"},
+  {id:"r2a7",sec:"Retail ICP",stage:"2",sub:"2 — Consideration",status:"urgent",name:"Customer proof point sheet",url:null,sf:"3-Discovery",why:"SwissRe, FHNW, $600K error — proof points exist but sellers can't find them.",modified:null,loc:null},
+  {id:"r2a8",sec:"Retail ICP",stage:"2",sub:"2 — Consideration",status:"build",name:"Competitive battle cards — Retail",url:null,sf:"3-Discovery",why:"Deploy the moment Lucernex, MRI, or CBRE is named. Sellers currently enter these deals blind.",modified:null,loc:null},
+  {id:"r2a9",sec:"Retail ICP",stage:"2",sub:"2 — Consideration",status:"build",name:"E&S ROI calculator",url:null,sf:"3-Discovery",why:"When the prospect asks 'what's the ROI' in discovery, sellers need a tool not just a story.",modified:null,loc:null},
+  {id:"r3a1",aud:"internal",sec:"Retail ICP",stage:"3",sub:"3 — Evaluation",status:"have",name:"Tango Global Security Overview 2026",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/!Rebrand%20Complete/Tango%20Global%20Infrastructure%20Security%20Overview%202026.pptx",sf:"4-Demo",why:"Deploy the moment IT or InfoSec enters the deal. 51 slides, closes the security objection.",modified:"Feb 2026",loc:"Marketing / Collateral / Rebrand Complete"},
+  {id:"r3a2",aud:"internal",sec:"Retail ICP",stage:"3",sub:"3 — Evaluation",status:"have",name:"Rebranded BSA Slides",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/!Rebrand%20Complete/Rebranded-BSA-Slides.pptx",sf:"4-Demo",why:"Technical deep-dive on platform architecture. Use when IT or engineering joins the eval.",modified:"—",loc:"Marketing / Collateral / Rebrand Complete"},
+  {id:"r3a3",sec:"Retail ICP",stage:"3",sub:"3 — Evaluation",status:"have",name:"Predictive Analytics demo deck",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/!Rebrand%20Complete/Base%20PA%20slides%205-30-2025%20new%20pp.pptx",sf:"4-Demo",why:"Core demo deck for PA conversations. Restaurant real estate focus. Needs trimming.",modified:"May 30, 2025",loc:"Marketing / Collateral / Rebrand Complete"},
+  {id:"r3a4",sec:"Retail ICP",stage:"3",sub:"3 — Evaluation",status:"have",name:"RFP Supplemental — JYSK",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/!Rebrand%20Complete/RFP%20Supplemental%20-%20JYSK.pptx",sf:"4-Demo",why:"Pull as starting template when an RFP drops. Fastest path to a strong first response.",modified:"—",loc:"Marketing / Collateral / Rebrand Complete"},
+  {id:"r3a5",sec:"Retail ICP",stage:"3",sub:"3 — Evaluation",status:"have",name:"Maintenance Flow deck",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/!Rebrand%20Complete/Maintenance%20Flow.pptx",sf:"4-Demo",why:"Simple 6-slide visual. Pull when Maintenance or Facilities surfaces during eval.",modified:"—",loc:"Marketing / Collateral / Rebrand Complete"},
+  {id:"r3a6",sec:"Retail ICP",stage:"3",sub:"3 — Evaluation",status:"revise",name:"Predictive Analytics deck — cut and reframe",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/!Rebrand%20Complete/Base%20PA%20slides%205-30-2025%20new%20pp.pptx",sf:"4-Demo",why:"Currently 76 slides. Cut to 20–25, lead with site selection pain not the feature list.",modified:"May 30, 2025",loc:"Marketing / Collateral / Rebrand Complete"},
+  {id:"r3a7",sec:"Retail ICP",stage:"3",sub:"3 — Evaluation",status:"revise",name:"E&S Discovery deck — fix branding",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/!Rebrand%20Complete/250409_Tango%20Energy%20and%20Sustainability%20Discovery%20-%20Initial%20Exchange_Rebranded.pptx",sf:"4-Demo",why:"Slide 1 still says 'by WatchWire.' Do not use until fixed — serious credibility risk.",modified:"Apr 9, 2025",loc:"Marketing / Collateral / Rebrand Complete"},
+  {id:"r4a1",sec:"Retail ICP",stage:"4",sub:"4 — Decision",status:"have",name:"Panera Product Exhibit",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Product%20Marketing/Sales%20%26%20CX%20Enablement/CX%20Enablement/MKT-Product_Exhibit_02.02.2026_Panera.docx",sf:"5-Proposal",why:"Attach to every proposal as commercial scope reference. Sets expectations before legal.",modified:"Feb 2, 2026",loc:"Marketing / Product Marketing / CX Enablement"},
+  {id:"r4a2",sec:"Retail ICP",stage:"4",sub:"4 — Decision",status:"have",name:"Customer Baseline Overview (Q2 2025)",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/!Rebrand%20Complete/Customer_vbaseline_28.05.2025.pptx",sf:"5-Proposal",why:"Send alongside the proposal. Shows what success looks like post-go-live.",modified:"May 28, 2025",loc:"Marketing / Collateral / Rebrand Complete"},
+  {id:"r4a3",sec:"Retail ICP",stage:"4",sub:"4 — Decision",status:"have",name:"Initial Exchange 2025",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Sales%20Playbook/Sales%20Decks/Tango%20Initial%20Exchange%202025.pptx",sf:"5-Proposal",why:"Use if a new executive sponsor joins at proposal stage and needs a fast Tango orientation.",modified:"—",loc:"Sales Playbook / Sales Decks"},
+  {id:"r4a4",sec:"Retail ICP",stage:"4",sub:"4 — Decision",status:"have",name:"Executive Exchange 2026",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Sales%20Playbook/Sales%20Decks/Tango%20Executive%20Exchange%202026.pptx",sf:"6-Negotiation",why:"Re-engage the C-suite when a deal stalls. Reframes platform value above the feature conversation.",modified:"—",loc:"Sales Playbook / Sales Decks"},
+  {id:"r4a5",sec:"Retail ICP",stage:"4",sub:"4 — Decision",status:"build",name:"Mutual Success Plan template",url:null,sf:"5-Proposal",why:"Vague next steps are the #1 deal stall. A shared MAP keeps both sides accountable.",modified:null,loc:null},
+  {id:"r5a1",sec:"Retail ICP",stage:"5",sub:"5 — Onboarding",status:"have",name:"Customer Baseline Overview",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/!Rebrand%20Complete/Customer_vbaseline_28.05.2025.pptx",sf:"7-Closed Won",why:"Share at handoff. Sets customer expectations for the onboarding journey.",modified:"May 28, 2025",loc:"Marketing / Collateral / Rebrand Complete"},
+  {id:"r5a2",sec:"Retail ICP",stage:"5",sub:"5 — Onboarding",status:"have",name:"Validation — Tango Occupancy 2025",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/!Rebrand%20Complete/Validation%20-%20Tango%20Occupancy%202025%20-%20pp.pptx",sf:"7-Closed Won",why:"Internal. Implementation team validates occupancy setup before go-live.",modified:"—",loc:"Marketing / Collateral / Rebrand Complete"},
+  {id:"r5a3",aud:"internal",sec:"Retail ICP",stage:"5",sub:"5 — Onboarding",status:"have",name:"Implementation SME Guide",url:"https://tangomc-my.sharepoint.com/:w:/r/personal/bree_giannelli_tangoanalytics_com/Documents/Implementation_SME_Guide.docx?d=w6dbabe11f98e41c0844c2df61eee8030",sf:"7-Closed Won",why:"Internal SME reference from Day 1 post-close. Reduces go-live errors.",modified:"—",loc:"Personal OneDrive (Bree)"},
+  {id:"r5a4",sec:"Retail ICP",stage:"5",sub:"5 — Onboarding",status:"build",name:"Retail onboarding playbook",url:null,sf:"7-Closed Won",why:"Standardizes go-lives. Reduces time-to-value and cuts early-stage churn.",modified:null,loc:null},
+  {id:"r6a1",sec:"Retail ICP",stage:"6",sub:"6 — Expansion & Renewal",status:"have",name:"E&S Executive Exchange deck",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/!Rebrand%20Complete/250411-Tango%20Energy%20and%20Sustainability%20-%20ExecutiveEchange-Rebranded.pptx",sf:"Renewal / Upsell",why:"Lead E&S upsell with existing Lease customers. $600K error story opens the door.",modified:"Apr 11, 2025",loc:"Marketing / Collateral / Rebrand Complete"},
+  {id:"r6a2",sec:"Retail ICP",stage:"6",sub:"6 — Expansion & Renewal",status:"build",name:"Retail expansion deck",url:null,sf:"Renewal / Upsell",why:"No deck exists for the Lease → E&S → P&M cross-sell motion. Critical gap for AMs.",modified:null,loc:null},
+  {id:"r6a3",sec:"Retail ICP",stage:"6",sub:"6 — Expansion & Renewal",status:"build",name:"Customer story video — Retail renewal win",url:null,sf:"Renewal / Upsell",why:"Send pre-renewal to show realized value. Most powerful retention asset.",modified:null,loc:null},
+  {id:"c1a1",sec:"Corporate ICP",stage:"1",sub:"1 — Awareness",status:"have",name:"Smarter Leasing: How AI is Revolutionizing Lease Management",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/eBooks%2C%20Guides%2C%20Reports%2C%20Whitepapers/Real%20Estate/Tango%20-%20Smarter%20Leasing%20How%20AI%20is%20Revolutionizing%20Lease%20Management.pdf",sf:"1-Prospecting",why:"#1 cold outreach asset for corporate lease leads. Open every new logo Lease sequence here.",modified:"—",loc:"Marketing / Collateral / eBooks / Real Estate"},
+  {id:"c1a2",sec:"Corporate ICP",stage:"1",sub:"1 — Awareness",status:"have",name:"A Smarter Workplace: How AI is Revolutionizing Workplace Management",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/eBooks%2C%20Guides%2C%20Reports%2C%20Whitepapers/Workplace/Tango%20-%20A%20Smarter%20Workplace_%20How%20AI%20is%20Revolutionizing%20Workplace.pdf",sf:"1-Prospecting",why:"Primary outreach asset for Workplace-first accounts. Open every new logo Workplace sequence here.",modified:"—",loc:"Marketing / Collateral / eBooks / Workplace"},
+  {id:"c1a3",sec:"Corporate ICP",stage:"1",sub:"1 — Awareness",status:"have",name:"Hybrid Work, Rebuilt",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/eBooks%2C%20Guides%2C%20Reports%2C%20Whitepapers/Workplace/Tango%20-%20Hybrid%20Work%2C%20Rebuilt.pdf",sf:"1-Prospecting",why:"Use when RTO mandate is the trigger event. Highly timely right now.",modified:"—",loc:"Marketing / Collateral / eBooks / Workplace"},
+  {id:"c1a4",sec:"Corporate ICP",stage:"1",sub:"1 — Awareness",status:"have",name:"7 Predictions for 2026",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/eBooks%2C%20Guides%2C%20Reports%2C%20Whitepapers/Real%20Estate/Tango%20-%207%20Predictions%20for%20Lease%20Accounting%20and%20Administration%20in%202026.pdf",sf:"1-Prospecting",why:"Nurture content for long-cycle corporate deals. Keeps Tango visible across 6–9 months.",modified:"Mar 26, 2026",loc:"Marketing / Collateral / eBooks / Real Estate"},
+  {id:"c1a5",sec:"Corporate ICP",stage:"1",sub:"1 — Awareness",status:"have",name:"Government ICP one-pager",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/!Rebrand%20Complete/Tango%20Government%20Clients-Rebranded.pptx",sf:"1-Prospecting",why:"Use for federal or regulated-industry outreach. FedRAMP + 71 federal agencies = instant credibility.",modified:"—",loc:"Marketing / Collateral / Rebrand Complete"},
+  {id:"c1a6",sec:"Corporate ICP",stage:"1",sub:"1 — Awareness",status:"urgent",name:"AI Lease Abstraction one-pager",url:null,sf:"1-Prospecting",why:"Pilot clients go live now and sellers have nothing to show for it. This blocks deals.",modified:null,loc:null},
+  {id:"c1a7",sec:"Corporate ICP",stage:"1",sub:"1 — Awareness",status:"urgent",name:"Customer proof point sheet",url:null,sf:"1-Prospecting",why:"SwissRe 10% savings, FHNW 20% cost reduction — exist but sellers can't find them.",modified:null,loc:null},
+  {id:"c1a8",sec:"Corporate ICP",stage:"1",sub:"1 — Awareness",status:"build",name:"Corporate brand explainer video",url:null,sf:"1-Prospecting",why:"Under 3-min Lease + Workplace narrative. Embeds in email sequences and LinkedIn.",modified:null,loc:null},
+  {id:"c1a9",sec:"Corporate ICP",stage:"2",sub:"2 — Consideration",status:"revise",name:"Corporate sales deck",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Product%20Marketing/Sales%20%26%20CX%20Enablement/Sales%20Slides/!Slide%20Library.pptx",sf:"2-Qualified",why:"Primary deck for first qualified call. Cut to 12 slides, lead with SwissRe and FHNW.",modified:"May 11, 2026",loc:"Marketing / Product Marketing / Sales Slides"},
+  {id:"c2a1",sec:"Corporate ICP",stage:"2",sub:"2 — Consideration",status:"have",name:"2025 Enterprise Occupancy Tracking Report (Verdantix)",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/eBooks%2C%20Guides%2C%20Reports%2C%20Whitepapers/Workplace/Tango%20-%20The%202025%20Enterprise%20Occupancy%20Tracking%20Report%20Stats%2C%20Challenges%2C%20Insights.pdf",sf:"3-Discovery",why:"Send before discovery — 96% track occupancy, only 7% trust the data. Establishes the problem.",modified:"—",loc:"Marketing / Collateral / eBooks / Workplace"},
+  {id:"c2a2",sec:"Corporate ICP",stage:"2",sub:"2 — Consideration",status:"have",name:"FASB ASC 842 series (6 docs)",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/eBooks%2C%20Guides%2C%20Reports%2C%20Whitepapers/Real%20Estate/Lease%20Compliance",sf:"3-Discovery",why:"Deploy when compliance surfaces. Send the specific doc that matches the objection.",modified:"—",loc:"Marketing / Collateral / Lease Compliance"},
+  {id:"c2a3",sec:"Corporate ICP",stage:"2",sub:"2 — Consideration",status:"have",name:"E&S Executive Exchange deck",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/!Rebrand%20Complete/250411-Tango%20Energy%20and%20Sustainability%20-%20ExecutiveEchange-Rebranded.pptx",sf:"3-Discovery",why:"Pull when E&S surfaces in discovery. Strongest proof point deck in the portfolio.",modified:"Apr 11, 2025",loc:"Marketing / Collateral / Rebrand Complete"},
+  {id:"c2a4",aud:"internal",sec:"Corporate ICP",stage:"2",sub:"2 — Consideration",status:"have",name:"Occupancy Internal FAQs",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Product%20Marketing/Sales%20%26%20CX%20Enablement/Occupancy/Tango%20Occupancy%20-%20Internal%20FAQs.docx",sf:"3-Discovery",why:"Internal only. Read before every Workplace call — best seller prep doc in the portfolio.",modified:"Mar 19, 2026",loc:"Marketing / Product Marketing / Occupancy"},
+  {id:"c2a5",sec:"Corporate ICP",stage:"2",sub:"2 — Consideration",status:"have",name:"Tango Occupancy Overview (20250530)",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Product%20Marketing/Sales%20%26%20CX%20Enablement/Sales%20Slides/Occupancy/Tango%20Occupancy%20Overview%20%2820250530%29.pptx",sf:"2-Qualified",why:"Use as Workplace intro deck once ICP fit is confirmed on the qualified call.",modified:"May 30, 2025",loc:"Marketing / Product Marketing / Sales Slides / Occupancy"},
+  {id:"c2a6",sec:"Corporate ICP",stage:"2",sub:"2 — Consideration",status:"have",name:"Tango Occupancy — Intro Call & Short Demo",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Product%20Marketing/Sales%20%26%20CX%20Enablement/Sales%20Slides/Tango%20Occupancy%20-%20Intro%20Call%20%26%20Short%20Demo.pptx",sf:"2-Qualified",why:"30-min discovery/intro deck for Workplace buyers. Keeps early calls tight and on-message.",modified:"Mar 19, 2026",loc:"Marketing / Product Marketing / Sales Slides"},
+  {id:"c2a7",sec:"Corporate ICP",stage:"2",sub:"2 — Consideration",status:"build",name:"Workplace ROI calculator",url:null,sf:"3-Discovery",why:"#1 requested tool in Workplace deals. Without it, sellers can only tell the story, not prove the number.",modified:null,loc:null},
+  {id:"c2a8",sec:"Corporate ICP",stage:"2",sub:"2 — Consideration",status:"revise",name:"Workplace discovery deck",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Product%20Marketing/Sales%20%26%20CX%20Enablement/Occupancy/1_Tango%20Occupancy%20-%20Sales%20Enablement%20Slides.pptx",sf:"3-Discovery",why:"Core discovery deck. Rebuild around right space / right size / right data — not modules.",modified:"Mar 19, 2026",loc:"Marketing / Product Marketing / Occupancy"},
+  {id:"c3a1",sec:"Corporate ICP",stage:"3",sub:"3 — Evaluation",status:"have",name:"Tango Global Security Overview 2026",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/!Rebrand%20Complete/Tango%20Global%20Infrastructure%20Security%20Overview%202026.pptx",sf:"4-Demo",why:"Deploy the moment IT or security joins the eval. Closes the InfoSec objection before it stalls.",modified:"Feb 2026",loc:"Marketing / Collateral / Rebrand Complete"},
+  {id:"c3a2",sec:"Corporate ICP",stage:"3",sub:"3 — Evaluation",status:"have",name:"Mobile Architecture deck",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/!Rebrand%20Complete/Tango_Mobile_Arch_New%20260306%20pp.pptx",sf:"4-Demo",why:"Pull when mobile is a procurement requirement. Flutter, iOS/Android, SSO/SAML — shuts it down.",modified:"Mar 6, 2026",loc:"Marketing / Collateral / Rebrand Complete"},
+  {id:"c3a3",sec:"Corporate ICP",stage:"3",sub:"3 — Evaluation",status:"have",name:"Team Analytics — Detailed Presentation",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/!Rebrand%20Complete/260112%20-%20TeamAnalytics%20-%20Detailed%20Presentation.pptx",sf:"4-Demo",why:"Use post-discovery once occupancy analytics is confirmed as a stated priority.",modified:"Jan 12, 2026",loc:"Marketing / Collateral / Rebrand Complete"},
+  {id:"c3a4",sec:"Corporate ICP",stage:"3",sub:"3 — Evaluation",status:"have",name:"Tango Occupancy — ROI Examples (20250530)",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Product%20Marketing/Sales%20%26%20CX%20Enablement/Sales%20Slides/Occupancy/Tango%20Occupancy%20-%20ROI%20Examples%20%2820250530%29.pptx",sf:"4-Demo",why:"Use in the demo debrief call to anchor what they just saw to a financial outcome.",modified:"May 30, 2025",loc:"Marketing / Product Marketing / Sales Slides / Occupancy"},
+  {id:"c3a5",aud:"internal",sec:"Corporate ICP",stage:"3",sub:"3 — Evaluation",status:"have",name:"WorkPlace Demo 1 Pager",url:"https://tangomc-my.sharepoint.com/:w:/r/personal/bree_giannelli_tangoanalytics_com/Documents/WorkPlace%20Demo%201%20pager%20Week%201.docx?d=waa0929ecf52945688e042a38dc623dbb",sf:"4-Demo",why:"One-page leave-behind after the Workplace demo. Gives the champion something to circulate.",modified:"—",loc:"Personal OneDrive (Bree)"},
+  {id:"c3a6",sec:"Corporate ICP",stage:"3",sub:"3 — Evaluation",status:"revise",name:"E&S Discovery deck — fix branding",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/!Rebrand%20Complete/250409_Tango%20Energy%20and%20Sustainability%20Discovery%20-%20Initial%20Exchange_Rebranded.pptx",sf:"4-Demo",why:"Do not use until 'by WatchWire' is removed from slide 1. Quick fix, high credibility risk.",modified:"Apr 9, 2025",loc:"Marketing / Collateral / Rebrand Complete"},
+  {id:"c3a7",sec:"Corporate ICP",stage:"3",sub:"3 — Evaluation",status:"revise",name:"Team Analytics deck — add business context",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Product%20Marketing/Sales%20%26%20CX%20Enablement/Sales%20Slides/240812-%20TeamAnalytics%20-%20Detailed%20Presentation.pptx",sf:"4-Demo",why:"Feature-heavy with no pain frame. Lead with the 53% utilization stat before any charts.",modified:"Mar 19, 2026",loc:"Marketing / Product Marketing / Sales Slides"},
+  {id:"c4a1",sec:"Corporate ICP",stage:"4",sub:"4 — Decision",status:"have",name:"Panera Product Exhibit",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Product%20Marketing/Sales%20%26%20CX%20Enablement/CX%20Enablement/MKT-Product_Exhibit_02.02.2026_Panera.docx",sf:"5-Proposal",why:"Attach to every proposal as commercial scope reference. Sets 3-yr minimum expectation early.",modified:"Feb 2, 2026",loc:"Marketing / Product Marketing / CX Enablement"},
+  {id:"c4a2",sec:"Corporate ICP",stage:"4",sub:"4 — Decision",status:"have",name:"Customer Baseline Overview (Q2 2025)",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/!Rebrand%20Complete/Customer_vbaseline_28.05.2025.pptx",sf:"5-Proposal",why:"Send with the proposal to show what success looks like post-go-live.",modified:"May 28, 2025",loc:"Marketing / Collateral / Rebrand Complete"},
+  {id:"c4a3",aud:"internal",sec:"Corporate ICP",stage:"4",sub:"4 — Decision",status:"have",name:"Occupancy Price List 2024",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Product%20Marketing/Sales%20%26%20CX%20Enablement/Occupancy/2407%20-%202024-Price-List%20-%20Tango%20Occupancy.xlsx",sf:"5-Proposal",why:"Internal reference for pricing conversations only. Do not share externally.",modified:"Mar 19, 2026",loc:"Marketing / Product Marketing / Occupancy"},
+  {id:"c4a4",sec:"Corporate ICP",stage:"4",sub:"4 — Decision",status:"build",name:"Mutual Success Plan template",url:null,sf:"5-Proposal",why:"Shared doc that keeps both sides accountable. Eliminates the 'let me check with my team' stall.",modified:null,loc:null},
+  {id:"c4a5",sec:"Corporate ICP",stage:"4",sub:"4 — Decision",status:"build",name:"Business case builder for CFO",url:null,sf:"5-Proposal",why:"Deploy when CFO enters the deal. Justifies platform spend vs. advisory fees in their language.",modified:null,loc:null},
+  {id:"c5a1",sec:"Corporate ICP",stage:"5",sub:"5 — Onboarding",status:"have",name:"Desk Mapping Guidelines",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/!Rebrand%20Complete/Desk%20mapping%20guidelines_Tango_Desk%20mappers%20-%20pp.pptx",sf:"7-Closed Won",why:"Internal. Implementation reference for desk mapping configuration.",modified:"—",loc:"Marketing / Collateral / Rebrand Complete"},
+  {id:"c5a2",sec:"Corporate ICP",stage:"5",sub:"5 — Onboarding",status:"have",name:"Validation — Tango Occupancy 2025",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/!Rebrand%20Complete/Validation%20-%20Tango%20Occupancy%202025%20-%20pp.pptx",sf:"7-Closed Won",why:"Internal. Validates occupancy baseline setup before go-live sign-off.",modified:"—",loc:"Marketing / Collateral / Rebrand Complete"},
+  {id:"c5a3",sec:"Corporate ICP",stage:"5",sub:"5 — Onboarding",status:"build",name:"Corporate onboarding playbook",url:null,sf:"7-Closed Won",why:"Standardizes enterprise go-lives. Reduces time-to-value and early churn risk.",modified:null,loc:null},
+  {id:"c6a1",sec:"Corporate ICP",stage:"6",sub:"6 — Expansion & Renewal",status:"have",name:"E&S Executive Exchange deck",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/!Rebrand%20Complete/250411-Tango%20Energy%20and%20Sustainability%20-%20ExecutiveEchange-Rebranded.pptx",sf:"Renewal / Upsell",why:"Lead E&S upsell with existing Lease or Workplace customers. The billing error story opens the door.",modified:"Apr 11, 2025",loc:"Marketing / Collateral / Rebrand Complete"},
+  {id:"c6a2",sec:"Corporate ICP",stage:"6",sub:"6 — Expansion & Renewal",status:"have",name:"Team Analytics — Detailed Presentation",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/!Rebrand%20Complete/260112%20-%20TeamAnalytics%20-%20Detailed%20Presentation.pptx",sf:"Renewal / Upsell",why:"Use in QBRs with existing Workplace accounts to trigger an analytics upsell conversation.",modified:"Jan 12, 2026",loc:"Marketing / Collateral / Rebrand Complete"},
+  {id:"c6a3",sec:"Corporate ICP",stage:"6",sub:"6 — Expansion & Renewal",status:"build",name:"Corporate platform expansion deck",url:null,sf:"Renewal / Upsell",why:"No deck exists for Lease → Workplace → E&S upsell motion. Critical gap for AMs.",modified:null,loc:null},
+  {id:"c6a4",sec:"Corporate ICP",stage:"6",sub:"6 — Expansion & Renewal",status:"build",name:"Customer story video — SwissRe (Occupancy)",url:null,sf:"Renewal / Upsell",why:"10% yearly lease savings told by the customer. Most powerful Corporate proof point.",modified:null,loc:null},
+  {id:"i1a1",sec:"Internal",stage:"",sub:"Sales Playbook",status:"have",name:"Tango Direct Sales Playbook FV May 2024",url:"https://tangomc.sharepoint.com/:p:/s/d41ff9fc-602d-4e10-99cf-1cfa90a8654f/IQDwk-NSFD98To-h_uR-mKSYAQhv47wlu_FIrpge8cFiSVc?email=Bree.Giannelli%40TangoAnalytics.com&e=VyGTwc",sf:"All Stages",why:"Core seller reference. Use at ramp and for deal strategy review with managers.",modified:"May 2024",loc:"Sales Playbook"},
+  {id:"i1a2",sec:"Internal",stage:"",sub:"Sales Playbook",status:"have",name:"!Slide Library",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Product%20Marketing/Sales%20%26%20CX%20Enablement/Sales%20Slides/!Slide%20Library.pptx",sf:"All Stages",why:"Source of truth for all sales slides. Pull from here when building any custom deck.",modified:"May 11, 2026",loc:"Marketing / Product Marketing / Sales Slides"},
+  {id:"i1a3",sec:"Internal",stage:"",sub:"Sales Playbook",status:"have",name:"Messaging Framework — February 2024",url:"https://tangomc-my.sharepoint.com/:x:/r/personal/bree_giannelli_tangoanalytics_com/Documents/Messaging%20Framework%20-%20February%202024.xlsx?d=wf7605aed647c4042b33c6a3bf177f65c",sf:"All Stages",why:"Source of truth for value props by product and persona. Foundation for all talk track revisions.",modified:"Feb 2024",loc:"Personal OneDrive (Bree)"},
+  {id:"i1a4",sec:"Internal",stage:"",sub:"Sales Playbook",status:"build",name:"Sales playbook — Retail ICP",url:null,sf:"All Stages",why:"Qualification criteria, discovery framework, demo flow, objection handles, competitive positioning.",modified:null,loc:null},
+  {id:"i1a5",sec:"Internal",stage:"",sub:"Sales Playbook",status:"build",name:"Sales playbook — Corporate ICP",url:null,sf:"All Stages",why:"Same structure as Retail. Workplace + Lease + E&S specific.",modified:null,loc:null},
+  {id:"i2a1",sec:"Internal",stage:"",sub:"Talk Tracks",status:"have",name:"Discovery Guide",url:"https://tangomc.sharepoint.com/:b:/r/sites/d41ff9fc-602d-4e10-99cf-1cfa90a8654f/Shared%20Documents/Sales%20Playbook/Tango_Discovery-Guide.pdf?csf=1&web=1",sf:"3-Discovery",why:"Read before every discovery call. Foundation of the entire discovery process.",modified:"—",loc:"Sales Playbook"},
+  {id:"i2a2",sec:"Internal",stage:"",sub:"Talk Tracks",status:"have",name:"Corporate Personas — Gong Flow Draft",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Product%20Marketing/Sales%20%26%20CX%20Enablement/Outreach%20Sequences/Corporate%20Personas%20-%20Gong%20flow%20draft.docx",sf:"1-Prospecting",why:"Load into Gong Engage for Corporate ICP cold outreach sequences.",modified:"May 19, 2026",loc:"Marketing / Product Marketing / Outreach Sequences"},
+  {id:"i2a3",sec:"Internal",stage:"",sub:"Talk Tracks",status:"have",name:"Retail Personas — Gong Flow Drafts",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Product%20Marketing/Sales%20%26%20CX%20Enablement/Outreach%20Sequences/Retail%20Personas%20-%20Gong%20flow%20drafts.docx",sf:"1-Prospecting",why:"Load into Gong Engage for Retail ICP cold outreach sequences.",modified:"May 7, 2026",loc:"Marketing / Product Marketing / Outreach Sequences"},
+  {id:"i2a4",sec:"Internal",stage:"",sub:"Talk Tracks",status:"have",name:"E&S Gong Flow 2026",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Product%20Marketing/Sales%20%26%20CX%20Enablement/Outreach%20Sequences/E%26S%20Gong%20Flow%202026.docx",sf:"1-Prospecting",why:"Use specifically for E&S-led outreach to sustainability and CFO personas.",modified:"Apr 2, 2026",loc:"Marketing / Product Marketing / Outreach Sequences"},
+  {id:"i2a5",sec:"Internal",stage:"",sub:"Talk Tracks",status:"have",name:"Messaging Training — All — 2024",url:"https://tangomc.sharepoint.com/:p:/r/sites/d41ff9fc-602d-4e10-99cf-1cfa90a8654f/Shared%20Documents/Sales%20Operations/Optia/Messaging%20Training%20-%20All%20-%202024.pptx?d=w938bf0da8ad4464fb2a1e94840e498db",sf:"All Stages",why:"New seller onboarding must-read. Covers all product lines and buyer personas.",modified:"2024",loc:"Sales Operations / Optia"},
+  {id:"i2a6",sec:"Internal",stage:"",sub:"Talk Tracks",status:"build",name:"Cold outreach talk tracks — Retail",url:null,sf:"1-Prospecting",why:"By trigger: renewal volume, rollout stall, compliance deadline.",modified:null,loc:null},
+  {id:"i2a7",sec:"Internal",stage:"",sub:"Talk Tracks",status:"build",name:"Cold outreach talk tracks — Corporate",url:null,sf:"1-Prospecting",why:"By trigger: RTO mandate, M&A, lease wave.",modified:null,loc:null},
+  {id:"i2a8",sec:"Internal",stage:"",sub:"Talk Tracks",status:"build",name:"Discovery talk tracks — both ICPs",url:null,sf:"3-Discovery",why:"Question sequences by persona: CRE Leader, CFO, HR, Store Ops.",modified:null,loc:null},
+  {id:"i2a9",sec:"Internal",stage:"",sub:"Talk Tracks",status:"build",name:"Demo talk tracks — by product suite",url:null,sf:"4-Demo",why:"Lease, Workplace, E&S, P&M. Enables consistent demo delivery without improvising.",modified:null,loc:null},
+  {id:"i3a1",sec:"Internal",stage:"",sub:"Competitive Intel",status:"have",name:"Planon — Deep Dive + Battlecard Suite (6 cards)",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Product%20Marketing/Competitive%20Intelligence/Intelligence%20Content%20-%20DeepDives%2C%20Battlecards/Planon/Planon%20Deep%20Dive.pptx",sf:"4-Demo → 6-Negotiation",why:"Full suite for any deal where Planon is named.",modified:"May 15, 2026",loc:"Marketing / Competitive Intelligence / Planon"},
+  {id:"i3a2",sec:"Internal",stage:"",sub:"Competitive Intel",status:"have",name:"MRI Software — Deep Dive + Battlecard Suite (5 cards)",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Product%20Marketing/Competitive%20Intelligence/Intelligence%20Content%20-%20DeepDives%2C%20Battlecards/MRI%20Software/MRI%20Software%20Deep%20Dive.pptx",sf:"4-Demo → 6-Negotiation",why:"Full suite for any deal where MRI is named.",modified:"May 15, 2026",loc:"Marketing / Competitive Intelligence / MRI Software"},
+  {id:"i3a3",sec:"Internal",stage:"",sub:"Competitive Intel",status:"have",name:"Eptura — Deep Dive + Battlecard Suite (7 cards)",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Product%20Marketing/Competitive%20Intelligence/Intelligence%20Content%20-%20DeepDives%2C%20Battlecards/Eptura/Eptura%20Deep%20Dive.pptx",sf:"4-Demo → 6-Negotiation",why:"Full suite for Eptura competitive deals.",modified:"May 15, 2026",loc:"Marketing / Competitive Intelligence / Eptura"},
+  {id:"i3a4",sec:"Internal",stage:"",sub:"Competitive Intel",status:"have",name:"Nakisa — Deep Dive + Battlecard Suite (6 cards)",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Product%20Marketing/Competitive%20Intelligence/Intelligence%20Content%20-%20DeepDives%2C%20Battlecards/Nakisa/Nakisa%20Deep%20Dive.pptx",sf:"4-Demo → 6-Negotiation",why:"Full suite for Lease Accounting competitive deals.",modified:"May 15, 2026",loc:"Marketing / Competitive Intelligence / Nakisa"},
+  {id:"i3a5",sec:"Internal",stage:"",sub:"Competitive Intel",status:"have",name:"Deepki — Deep Dive + Battlecard Suite (3 cards)",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Product%20Marketing/Competitive%20Intelligence/Intelligence%20Content%20-%20DeepDives%2C%20Battlecards/Deepki/Deepki%20Deep%20Dive.pptx",sf:"4-Demo → 6-Negotiation",why:"Pull when Deepki is named in an E&S competitive deal.",modified:"May 15, 2026",loc:"Marketing / Competitive Intelligence / Deepki"},
+  {id:"i3a6",sec:"Internal",stage:"",sub:"Competitive Intel",status:"have",name:"Lucernex — Deep Dive + Battlecard Suite",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Product%20Marketing/Competitive%20Intelligence/Intelligence%20Content%20-%20DeepDives%2C%20Battlecards/Accruent%20%26%20Lucernex/Lucernex/Lucernex%20Deep%20Dive.pptx",sf:"4-Demo → 6-Negotiation",why:"Pull when Lucernex or Accruent is named — most common Retail competitive situation.",modified:"Mar 19, 2026",loc:"Marketing / Competitive Intelligence / Lucernex"},
+  {id:"i3a7",sec:"Internal",stage:"",sub:"Competitive Intel",status:"have",name:"MEDDPICC Guide",url:"https://tangomc.sharepoint.com/:b:/r/sites/d41ff9fc-602d-4e10-99cf-1cfa90a8654f/Shared%20Documents/Sales%20Playbook/MEDDPICC%20Guide.pdf?csf=1&web=1",sf:"3-Discovery",why:"Core qualification framework. If you can't answer every letter, the deal isn't real.",modified:"—",loc:"Sales Playbook"},
+  {id:"i3a8",sec:"Internal",stage:"",sub:"Competitive Intel",status:"build",name:"Objection handle library — Retail",url:null,sf:"3-Discovery → 6-Negotiation",why:"Price, 'we use CBRE,' 'we have a spreadsheet,' integration concerns.",modified:null,loc:null},
+  {id:"i3a9",sec:"Internal",stage:"",sub:"Competitive Intel",status:"build",name:"Objection handle library — Corporate",url:null,sf:"3-Discovery → 6-Negotiation",why:"IBM Tririga/Planon competitive, price, IT/security, 'we're not ready.'",modified:null,loc:null},
+  {id:"i4a1",sec:"Internal",stage:"",sub:"GTM Journey",status:"have",name:"Joint Execution Plan",url:"https://tangomc.sharepoint.com/:b:/r/sites/d41ff9fc-602d-4e10-99cf-1cfa90a8654f/Shared%20Documents/Sales%20Playbook/Tango_Joint-Execution-Plan.pdf?csf=1&web=1",sf:"5-Proposal → 7-Closed Won",why:"Use with strategic accounts at proposal and close. Aligns both sides on a shared path to value.",modified:"—",loc:"Sales Playbook"},
+  {id:"i4a2",sec:"Internal",stage:"",sub:"GTM Journey",status:"have",name:"Account Management / Sales GTM Tiers",url:"https://tangomc.sharepoint.com/sites/Intranet-Sales/SitePages/TargetAccount-Management-Sales-GTM-Tiers.aspx",sf:"All Stages",why:"Reference for account prioritization. Determines coverage model by account tier.",modified:"—",loc:"Sales Intranet"},
+  {id:"i4a3",sec:"Internal",stage:"",sub:"GTM Journey",status:"build",name:"GTM journey map — Retail",url:null,sf:"All Stages",why:"Buyer journey from trigger to close: personas, entry points, handoff moments, stage velocity targets.",modified:null,loc:null},
+  {id:"i4a4",sec:"Internal",stage:"",sub:"GTM Journey",status:"build",name:"GTM journey map — Corporate",url:null,sf:"All Stages",why:"Same structure as Retail. Required for consistent territory planning.",modified:null,loc:null},
+  {id:"i5a1",sec:"Internal",stage:"",sub:"Implementation Playbook",status:"have",name:"Implementation SME Guide",url:"https://tangomc-my.sharepoint.com/:w:/r/personal/bree_giannelli_tangoanalytics_com/Documents/Implementation_SME_Guide.docx?d=w6dbabe11f98e41c0844c2df61eee8030",sf:"7-Closed Won",why:"Internal SME reference from Day 1 post-close. Reduces go-live errors.",modified:"—",loc:"Personal OneDrive (Bree)"},
+  {id:"i5a2",sec:"Internal",stage:"",sub:"Implementation Playbook",status:"have",name:"Services (Sales Intranet)",url:"https://tangomc.sharepoint.com/sites/Intranet-Sales/SitePages/Tango-Services---DRAFT.aspx",sf:"7-Closed Won",why:"Full services catalog. Reference for scoping and customer-facing services questions.",modified:"—",loc:"Sales Intranet"},
+  {id:"i5a3",sec:"Internal",stage:"",sub:"Implementation Playbook",status:"build",name:"IM playbook — Retail",url:null,sf:"7-Closed Won",why:"Data migration, configuration, go-live checklist, time-to-value milestones.",modified:null,loc:null},
+  {id:"i5a4",sec:"Internal",stage:"",sub:"Implementation Playbook",status:"build",name:"IM playbook — Corporate",url:null,sf:"7-Closed Won",why:"Occupancy baseline setup, Workplace configuration, Lease data migration.",modified:null,loc:null},
+  {id:"i6a1",sec:"Internal",stage:"",sub:"CX Playbook",status:"have",name:"Tango Account Manager Playbook FV May 2024",url:"https://tangomc.sharepoint.com/:p:/s/d41ff9fc-602d-4e10-99cf-1cfa90a8654f/IQCDHmxyKkM0ToT4OddC046DARx5LO99vPq5DZB7ZTe1t1A?email=Bree.Giannelli%40TangoAnalytics.com&e=cZmXdT",sf:"Renewal / Upsell",why:"Core reference for all AMs. Covers renewal motion, expansion triggers, and health scoring.",modified:"May 2024",loc:"Sales Playbook"},
+  {id:"i6a2",sec:"Internal",stage:"",sub:"CX Playbook",status:"have",name:"CX Renewal Process",url:"https://tangomc.sharepoint.com/:p:/r/RevOps/Shared%20Documents/RH/CX%20Renewal%20Process.pptx?d=w3045b54e4dde46858372ff6da63043a4",sf:"Renewal / Upsell",why:"Step-by-step renewal motion. Ensures every renewal is handled consistently.",modified:"—",loc:"RevOps"},
+  {id:"i6a3",sec:"Internal",stage:"",sub:"CX Playbook",status:"build",name:"CX playbook — both ICPs",url:null,sf:"7-Closed Won → Renewal",why:"Post go-live success motions, health scoring, QBR template, escalation path.",modified:null,loc:null},
+  {id:"i6a4",sec:"Internal",stage:"",sub:"CX Playbook",status:"build",name:"Executive QBR template",url:null,sf:"Renewal / Upsell",why:"ROI review + expansion conversation framework. Ensures value is quantified at every renewal.",modified:null,loc:null},
+  {id:"i7a1",sec:"Internal",stage:"",sub:"Handoff Process",status:"have",name:"Sales Process Page (Intranet)",url:"https://tangomc.sharepoint.com/sites/d41ff9fc-602d-4e10-99cf-1cfa90a8654f/SitePages/Tango-Sales-Processes.aspx",sf:"All Stages",why:"Source of truth for all sales process links. Bookmark and share with the team.",modified:"—",loc:"Sales Intranet"},
+  {id:"i7a2",sec:"Internal",stage:"",sub:"Handoff Process",status:"have",name:"Renewal Process (Intranet)",url:"https://tangomc.sharepoint.com/RevOps/SitePages/Salesforce-Renewal-Process-Guide---2026.aspx",sf:"Renewal / Upsell",why:"2026 Salesforce renewal workflow. Use for every renewal opportunity.",modified:"—",loc:"RevOps Intranet"},
+  {id:"i7a3",sec:"Internal",stage:"",sub:"Handoff Process",status:"build",name:"Sales → Implementation handoff SOP",url:null,sf:"7-Closed Won",why:"Deal summary template, data requirements, stakeholder map. Most common source of early churn.",modified:null,loc:null},
+  {id:"i7a4",sec:"Internal",stage:"",sub:"Handoff Process",status:"build",name:"Implementation → CS handoff SOP",url:null,sf:"7-Closed Won",why:"Go-live sign-off, success criteria, first 90-day plan. Defines success before CS takes over.",modified:null,loc:null},
+  {id:"i7a5",sec:"Internal",stage:"",sub:"Handoff Process",status:"build",name:"CS → Renewal/Expansion handoff SOP",url:null,sf:"Renewal / Upsell",why:"Renewal trigger checklist, expansion signal guide.",modified:null,loc:null},
+  {id:"i8a1",sec:"Internal",stage:"",sub:"Systems / SOPs",status:"have",name:"Salesforce Stages and Key Fields Guide",url:"https://tangomc.sharepoint.com/:b:/r/sites/d41ff9fc-602d-4e10-99cf-1cfa90a8654f/Shared%20Documents/Sales%20Operations/Process%20Documentation/Salesforce%20Stages%20and%20Key%20Fields%20Guide.pdf?csf=1&web=1",sf:"All Stages",why:"Read at ramp. Reference before every pipeline review — wrong fields = wrong forecast.",modified:"—",loc:"Sales Operations / Process Documentation"},
+  {id:"i8a2",sec:"Internal",stage:"",sub:"Systems / SOPs",status:"have",name:"2025 Tango Sales Process",url:"https://tangomc.sharepoint.com/:b:/r/sites/d41ff9fc-602d-4e10-99cf-1cfa90a8654f/Shared%20Documents/Sales%20Operations/Process%20Documentation/2025%20Tango%20Sales%20Process.pdf?csf=1&web=1",sf:"All Stages",why:"Reference for stage progression and exit criteria. Check exit gate first when a deal stalls.",modified:"—",loc:"Sales Operations / Process Documentation"},
+  {id:"i8a3",sec:"Internal",stage:"",sub:"Systems / SOPs",status:"have",name:"Contract Negotiations and Execution Process",url:"https://tangomc.sharepoint.com/:b:/r/sites/d41ff9fc-602d-4e10-99cf-1cfa90a8654f/Shared%20Documents/Sales%20Operations/Process%20Documentation/Contract%20Negotiations%20and%20Execution%20Process.pdf?csf=1&web=1",sf:"6-Negotiation",why:"Reference for all contract and negotiation stages. Reduces legal cycle time.",modified:"—",loc:"Sales Operations / Process Documentation"},
+  {id:"i8a4",sec:"Internal",stage:"",sub:"Systems / SOPs",status:"have",name:"Gong — MEDDPICC Playbook",url:"https://tangomc.sharepoint.com/:b:/r/sites/d41ff9fc-602d-4e10-99cf-1cfa90a8654f/Shared%20Documents/Sales%20Operations/Process%20Documentation/Gong%20-%20MEDDPICC%20Playbook.pdf?csf=1&web=1",sf:"3-Discovery → 5-Proposal",why:"Links MEDDPICC to Gong trackers. Check deal health before every review.",modified:"—",loc:"Sales Operations / Process Documentation"},
+  {id:"i8a5",sec:"Internal",stage:"",sub:"Systems / SOPs",status:"have",name:"Discount Notification + Request Templates",url:"https://tangomc.sharepoint.com/:w:/r/sites/d41ff9fc-602d-4e10-99cf-1cfa90a8654f/Shared%20Documents/Sales%20Operations/Process%20Documentation/TEMPLATE%20-%20Discount%20Notification%20Email.docx?d=w9d635411989540c1bf599c32c3bafab4",sf:"6-Negotiation",why:"Required for discount approvals. Use to trigger the correct approval chain.",modified:"—",loc:"Sales Operations / Process Documentation"},
+  {id:"i9a1",sec:"Internal",stage:"",sub:"Tech Stack — Gong",status:"have",name:"Gong Anywhere Add-In in Outlook",url:"https://tangomc.sharepoint.com/:b:/r/sites/d41ff9fc-602d-4e10-99cf-1cfa90a8654f/Shared%20Documents/Sales%20Operations/Gong/Gong%20Anywhere%20Add-In%20in%20Outlook.pdf?csf=1&web=1",sf:"All Stages",why:"Install at ramp. Required for email tracking and engagement insights.",modified:"—",loc:"Sales Operations / Gong"},
+  {id:"i9a2",sec:"Internal",stage:"",sub:"Tech Stack — Gong",status:"have",name:"Gong Engage Account Setup for Sellers",url:"https://tangomc.sharepoint.com/:b:/r/sites/d41ff9fc-602d-4e10-99cf-1cfa90a8654f/Shared%20Documents/Sales%20Operations/Gong/Gong%20Engage%20Account%20Setup%20for%20Sellers.pdf?csf=1&web=1",sf:"1-Prospecting",why:"Set up before running your first Gong Engage sequence.",modified:"—",loc:"Sales Operations / Gong"},
+  {id:"i9a3",sec:"Internal",stage:"",sub:"Tech Stack — Gong",status:"have",name:"Sales Enablement Gong Library",url:"https://us-78632.app.gong.io/library/company?workspace-id=7693673583780543439&folder-id=6621889510936793564",sf:"All Stages",why:"Recorded training sessions. Reference when onboarding or refreshing on a product line.",modified:"Ongoing",loc:"Gong Library"},
+  {id:"i10a1",sec:"Internal",stage:"",sub:"Tech Stack — Salesforce",status:"have",name:"SFDC SharePoint Site",url:"https://tangomc.sharepoint.com/sites/TangoSFDC/SitePages/CollabHome.aspx",sf:"All Stages",why:"Master Salesforce documentation hub. Bookmark this on Day 1.",modified:"—",loc:"Salesforce Intranet"},
+  {id:"i10a2",sec:"Internal",stage:"",sub:"Tech Stack — Salesforce",status:"have",name:"Salesforce Forecast Tab",url:"https://tangomc.sharepoint.com/:p:/r/sites/d41ff9fc-602d-4e10-99cf-1cfa90a8654f/Shared%20Documents/Sales%20Operations/Salesforce/Salesforce%20Forecast/Salesforce%20Forecast.pptx?d=we9eadc46ac314f2ca4ffcec87a992612",sf:"5-Proposal",why:"Reference for accurate weekly forecast submissions. Wrong inputs here = wrong call.",modified:"—",loc:"Sales Operations / Salesforce"},
+  {id:"i11a1",sec:"Internal",stage:"",sub:"Social Selling",status:"have",name:"Social Selling Playbook",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Product%20Marketing/Sales%20%26%20CX%20Enablement/Social%20Selling%20Training/Social%20Selling%20Playbook.pdf",sf:"1-Prospecting",why:"Read before any LinkedIn outreach. Foundation of the social selling motion.",modified:"Mar 19, 2026",loc:"Marketing / Social Selling Training"},
+  {id:"i11a2",sec:"Internal",stage:"",sub:"Social Selling",status:"have",name:"Social Selling Training Sessions (1–3)",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Product%20Marketing/Sales%20%26%20CX%20Enablement/Social%20Selling%20Training/Social%20Selling%20Training%20Session%201.pdf",sf:"1-Prospecting",why:"Required for all sellers doing LinkedIn outreach. Three sessions build progressively.",modified:"Mar 19, 2026",loc:"Marketing / Social Selling Training"},
+
+  // ── Landlords / E&S ICP ──────────────────────────────────────────────
+  // Stage 1 — Awareness
+  {id:"le1a1",sec:"Landlords / E&S ICP",stage:"1",sub:"1 — Awareness",aud:"external",status:"have",name:"Building an Effective Sustainability Strategy in 2026",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/eBooks%2C%20Guides%2C%20Reports%2C%20Whitepapers/Energy%20%26%20Sustainability/Tango%20-%20Building%20an%20Effective%20Sustainability%20Strategy%20in%202026.pdf",sf:"1-Prospecting",why:"Primary cold outreach asset for E&S leads. Open every WatchWire new logo sequence here. Best for CSO, Head of Sustainability, or CFO with ESG mandate.",modified:"—",loc:"Marketing / Collateral / eBooks / E&S"},
+  {id:"le1a2",sec:"Landlords / E&S ICP",stage:"1",sub:"1 — Awareness",aud:"external",status:"have",name:"Energy as a Managed Cost",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/eBooks%2C%20Guides%2C%20Reports%2C%20Whitepapers/Energy%20%26%20Sustainability/Tango%20-%20Energy%20as%20a%20Managed%20Cost.pdf",sf:"1-Prospecting",why:"Frames energy as a recoverable P&L line, not just an operating expense. Best cold opener when CFO or VP Operations is in the buying committee.",modified:"May 12, 2026",loc:"Marketing / Collateral / eBooks / E&S"},
+  {id:"le1a3",sec:"Landlords / E&S ICP",stage:"1",sub:"1 — Awareness",aud:"external",status:"in_review",name:"WatchWire platform overview one-pager",url:null,sf:"1-Prospecting",why:"Standalone WatchWire product intro for Landlord/REIT/SLED ICP outreach. E&S buyers need their own first-touch asset — IWMS messaging doesn't land with sustainability operators. Pending PMM review.",modified:null,loc:null},
+  {id:"le1a4",sec:"Landlords / E&S ICP",stage:"1",sub:"1 — Awareness",aud:"external",status:"in_review",name:"AI by Tango — E&S Quick Card",url:null,sf:"1-Prospecting",why:"AI capabilities framed for sustainability operators: ESG disclosure automation, energy anomaly detection, utility bill benchmarking. Adapted from corporate AI card. Pending review.",modified:null,loc:null},
+  {id:"le1a5",sec:"Landlords / E&S ICP",stage:"1",sub:"1 — Awareness",aud:"external",status:"build",name:"Landlord / REIT ICP outreach sequence",url:null,sf:"1-Prospecting",why:"Cold outreach designed for property owners and REIT asset managers — different buyer language than Retail/Corporate. Entry via energy cost or ESG compliance mandate, not lease administration.",modified:null,loc:null},
+  // Stage 2 — Consideration
+  {id:"le2a1",sec:"Landlords / E&S ICP",stage:"2",sub:"2 — Consideration",aud:"external",status:"have",name:"E&S Executive Exchange deck",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/!Rebrand%20Complete/250411-Tango%20Energy%20and%20Sustainability%20-%20ExecutiveEchange-Rebranded.pptx",sf:"3-Discovery",why:"Strongest proof point deck in the E&S portfolio. $600K billing error recovered, $80K credit. Lead with this when discovery confirms E&S is the primary pain — not as an intro deck.",modified:"Apr 11, 2025",loc:"Marketing / Collateral / Rebrand Complete"},
+  {id:"le2a2",sec:"Landlords / E&S ICP",stage:"2",sub:"2 — Consideration",aud:"external",status:"have",name:"Retailers Guide to Sustainability",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/eBooks%2C%20Guides%2C%20Reports%2C%20Whitepapers/Retail/Tango%20-%20Retailers'%20Guide%20to%20Sustainability.pdf",sf:"3-Discovery",why:"Use with retail-owned properties or mixed-use landlords only. Needs refresh before broad deployment beyond retail audience.",modified:"—",loc:"Marketing / Collateral / eBooks / Retail"},
+  {id:"le2a3",sec:"Landlords / E&S ICP",stage:"2",sub:"2 — Consideration",aud:"external",status:"build",name:"E&S ROI calculator",url:null,sf:"3-Discovery",why:"#1 gap in E&S deals. Sellers can tell the $600K story but can't help prospects model their own savings. Tool for every E&S discovery follow-up.",modified:null,loc:null},
+  {id:"le2a4",sec:"Landlords / E&S ICP",stage:"2",sub:"2 — Consideration",aud:"external",status:"in_review",name:"ESG disclosure / reporting guide",url:null,sf:"3-Discovery",why:"Covers SEC climate disclosure, TCFD, GRESB, and EU CSRD requirements. Relevant for REIT and institutional landlord buyers. Pending PMM and legal review before publishing.",modified:null,loc:null},
+  {id:"le2a5",sec:"Landlords / E&S ICP",stage:"2",sub:"2 — Consideration",aud:"internal",status:"in_review",name:"WatchWire vs. point solutions — internal comparison",url:null,sf:"3-Discovery",why:"Internal reference comparing WatchWire to Scaler, Deepki, Utility Cloud, and Measurabl on key dimensions. Use to prep for E&S competitive conversations. Pending competitive team review.",modified:null,loc:null},
+  // Stage 3 — Evaluation
+  {id:"le3a1",sec:"Landlords / E&S ICP",stage:"3",sub:"3 — Evaluation",aud:"external",status:"revise",name:"E&S Discovery deck — fix branding",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/!Rebrand%20Complete/250409_Tango%20Energy%20and%20Sustainability%20Discovery%20-%20Initial%20Exchange_Rebranded.pptx",sf:"4-Demo",why:"⚠️ Do not use until 'by WatchWire' is removed from slide 1. Quick fix — serious credibility risk if sent to a Tango-branded account.",modified:"Apr 9, 2025",loc:"Marketing / Collateral / Rebrand Complete"},
+  {id:"le3a2",sec:"Landlords / E&S ICP",stage:"3",sub:"3 — Evaluation",aud:"external",status:"have",name:"Tango Global Security Overview 2026",url:"https://tangomc.sharepoint.com/sites/marketing/Shared%20Documents/Collateral/!Rebrand%20Complete/Tango%20Global%20Infrastructure%20Security%20Overview%202026.pptx",sf:"4-Demo",why:"Deploy when IT or InfoSec joins the eval. Required for any enterprise E&S deal touching utility or infrastructure data.",modified:"Feb 2026",loc:"Marketing / Collateral / Rebrand Complete"},
+  {id:"le3a3",sec:"Landlords / E&S ICP",stage:"3",sub:"3 — Evaluation",aud:"internal",status:"in_review",name:"WatchWire demo script — standard E&S flow",url:null,sf:"4-Demo",why:"Standardized demo script for WatchWire: utility data ingestion, anomaly detection, benchmarking, ESG reporting. Awaiting PS/Solutions team review before publishing.",modified:null,loc:null},
+  {id:"le3a4",sec:"Landlords / E&S ICP",stage:"3",sub:"3 — Evaluation",aud:"external",status:"in_review",name:"WatchWire product capabilities deck",url:null,sf:"4-Demo",why:"Dedicated WatchWire demo deck — energy data depth, meter granularity, API integrations, reporting. Separate from IWMS demo materials. Pending product team review.",modified:null,loc:null},
+  // Stage 4 — Decision
+  {id:"le4a1",sec:"Landlords / E&S ICP",stage:"4",sub:"4 — Decision",aud:"internal",status:"in_review",name:"WatchWire product exhibit / commercial scope",url:null,sf:"5-Proposal",why:"Attach to E&S proposals as commercial scope reference. Sets utility count, data source coverage, SLA expectations. Needs legal and RevOps review before use.",modified:null,loc:null},
+  {id:"le4a2",sec:"Landlords / E&S ICP",stage:"4",sub:"4 — Decision",aud:"external",status:"build",name:"E&S business case builder — CFO version",url:null,sf:"5-Proposal",why:"CFO-facing ROI model for E&S: utility bill recovery, CAM reconciliation savings, ESG compliance cost avoidance. Needed for any E&S deal where finance is the approver.",modified:null,loc:null},
+  // Stage 5 — Onboarding
+  {id:"le5a1",sec:"Landlords / E&S ICP",stage:"5",sub:"5 — Onboarding",aud:"internal",status:"build",name:"WatchWire onboarding playbook",url:null,sf:"7-Closed Won",why:"Data source setup, utility bill ingestion, meter configuration, go-live checklist. E&S has a different implementation path from IWMS — needs its own playbook.",modified:null,loc:null},
+  {id:"le5a2",sec:"Landlords / E&S ICP",stage:"5",sub:"5 — Onboarding",aud:"external",status:"in_review",name:"WatchWire customer welcome packet",url:null,sf:"7-Closed Won",why:"First-day customer materials: data connection guide, support contacts, success milestone map. Distinct from IWMS onboarding materials. Pending CS review.",modified:null,loc:null},
+  // Stage 6 — Expansion & Renewal
+  {id:"le6a1",sec:"Landlords / E&S ICP",stage:"6",sub:"6 — Expansion & Renewal",aud:"external",status:"in_review",name:"ESG Disclosure Automation overview",url:null,sf:"Renewal / Upsell",why:"Preview of Jedi roadmap ESG Disclosure Agent. Use in QBRs with existing E&S accounts to prime the agentic product conversation. Needs product + PMM review before any customer use.",modified:null,loc:null},
+  {id:"le6a2",sec:"Landlords / E&S ICP",stage:"6",sub:"6 — Expansion & Renewal",aud:"external",status:"build",name:"WatchWire customer story — E&S win",url:null,sf:"Renewal / Upsell",why:"Most powerful E&S retention asset. Customer-told story of energy savings or ESG compliance milestone achieved. No video or written case study currently exists.",modified:null,loc:null},
+  {id:"le6a3",sec:"Landlords / E&S ICP",stage:"6",sub:"6 — Expansion & Renewal",aud:"external",status:"build",name:"E&S QBR template",url:null,sf:"Renewal / Upsell",why:"ROI review structure for E&S quarterly business reviews. Energy savings realized, ESG milestones, benchmark comparisons. Expansion hook: 'Here's what we haven't yet measured.'",modified:null,loc:null},
+  // ── New Competitive Intel ──────────────────────────────────────────────
+  {id:"i3b1",sec:"Internal",stage:"",sub:"Competitive Intel",aud:"internal",status:"urgent",name:"SiteZeus / Crue AI — Battlecard",url:null,sf:"4-Demo → 6-Negotiation",why:"Retail's #1 active competitive threat. Zeus.ai shipped June 2025; 25% client growth. Counter: 'What happens after you pick the site? Site selection without lease execution is half the workflow.' No card currently exists.",modified:null,loc:null},
+  {id:"i3b2",sec:"Internal",stage:"",sub:"Competitive Intel",aud:"internal",status:"urgent",name:"IBM TRIRIGA — Battlecard",url:null,sf:"4-Demo → 6-Negotiation",why:"Corporate's #1 IT-led competitive loss. Wins when IT controls the evaluation. Counter: re-route to RE champion immediately. If IT is leading and RE isn't a champion, qualify out early. No card currently exists.",modified:null,loc:null},
+  {id:"i3b3",sec:"Internal",stage:"",sub:"Competitive Intel",aud:"internal",status:"build",name:"CoStar — Competitive Brief",url:null,sf:"4-Demo → 6-Negotiation",why:"Lease benchmarking confirmed in Jan 2026 investor docs. Not GA yet but appearing in corporate deals. Counter: CoStar has listing data; Tango is 18 years of transaction data plus the system of record for lease execution.",modified:null,loc:null},
+  {id:"i3b4",sec:"Internal",stage:"",sub:"Competitive Intel",aud:"internal",status:"build",name:"VergeSense — Competitive Brief",url:null,sf:"4-Demo → 6-Negotiation",why:"Corporate Workplace threat. Predictive Planning with lease exit scenarios shipped Sept 2025. Counter: VergeSense is sensors + analytics; Tango is sensors + analytics + lease + transactions in one platform.",modified:null,loc:null},
+  {id:"i3b5",sec:"Internal",stage:"",sub:"Competitive Intel",aud:"internal",status:"build",name:"Scaler — Competitive Brief (E&S)",url:null,sf:"4-Demo → 6-Negotiation",why:"New HIGH threat in E&S segment (elevated Apr 2026). €-backed, NA expansion active. Counter with WatchWire's depth of utility data and IWMS integration advantage.",modified:null,loc:null},
+  {id:"i3b6",sec:"Internal",stage:"",sub:"Competitive Intel",aud:"internal",status:"in_review",name:"Yardi Occupier — Competitive / Partner Analysis",url:null,sf:"4-Demo → 6-Negotiation",why:"Yardi occupier gap analysis plus potential partnership framing via RealFoundations/Newmark (May 2026 signal). Pending GTM decision on compete vs. partner positioning before publishing.",modified:null,loc:null},
+  // ── Bootcamp & Certification (Internal) ──────────────────────────────
+  {id:"ib1a1",sec:"Internal",stage:"",sub:"Bootcamp & Certification",aud:"internal",status:"in_review",name:"AE/CX Bootcamp Agenda — July 21–22, 2026 (v2)",url:null,sf:"All Stages",why:"Final agenda for the July bootcamp. Day 1: ICP Cube (8 archetypes), Product, Discovery, Disruptive Questions. Day 2: CX Expansion Motion, Competitive Handling, Pricing + MAP, Cert Launch. Pending facilitator sign-off.",modified:"May 2026",loc:"OneDrive (Bree)"},
+  {id:"ib1a2",sec:"Internal",stage:"",sub:"Bootcamp & Certification",aud:"internal",status:"in_review",name:"Buyer Persona Reference Cards — 8 Archetypes (Appendix A)",url:null,sf:"All Stages",why:"Role play and observed cert call reference. Corporate: Lauren (Portfolio Exec), Mark (Risk/Gov), Sarah (Execution), Emily (Strategy). Retail: Michelle, Jason, Taylor, Alex. Assign specific archetype — not 'RE Champion.'",modified:"May 2026",loc:"OneDrive (Bree)"},
+  {id:"ib1a3",sec:"Internal",stage:"",sub:"Bootcamp & Certification",aud:"internal",status:"in_review",name:"ICP Trigger Signal Map (Appendix B)",url:null,sf:"1-Prospecting",why:"One-page external signal map by ICP track. Tells sellers WHEN to call: CFO cost reduction, RTO mandate, lease expiration cluster, store expansion announcement. Day 1 close handout at bootcamp.",modified:"May 2026",loc:"OneDrive (Bree)"},
+  {id:"ib1a4",sec:"Internal",stage:"",sub:"Bootcamp & Certification",aud:"internal",status:"in_review",name:"Proof Point Persona Matrix (Appendix C)",url:null,sf:"2-Qualified → 5-Proposal",why:"Maps SwissRe/FHNW/$600K error/FHNW cleaning reduction to specific archetypes with when-to-use guidance. Used in Day 2 Highspot hands-on lab — task: find the proof point for your archetype.",modified:"May 2026",loc:"OneDrive (Bree)"},
+  {id:"ib1a5",sec:"Internal",stage:"",sub:"Bootcamp & Certification",aud:"internal",status:"in_review",name:"Churn Archetype Guide + Defend-then-Expand (Appendix D)",url:null,sf:"Renewal / Upsell",why:"CX rep reference. Four archetypes: Acquisition-Inherited, Growth-Dependent, Managed Services Buyer, Single-Module Low-Stickiness. Recognition signals, intervention, and Corporate Defend-then-Expand cross-sell hooks.",modified:"May 2026",loc:"OneDrive (Bree)"},
+  {id:"ib1a6",sec:"Internal",stage:"",sub:"Bootcamp & Certification",aud:"internal",status:"build",name:"ICP Cube certification scoring rubric",url:null,sf:"All Stages",why:"Formal scoring guide for the observed discovery call cert. 5-point rubric: provocation used, pain surfaced before product, value layer anchored, MAP set, buyer archetype correct. Pass: 4 of 5. Required before the August cert window opens.",modified:null,loc:null},
+  {id:"ib1a7",sec:"Internal",stage:"",sub:"Bootcamp & Certification",aud:"internal",status:"build",name:"Discovery question bank by archetype",url:null,sf:"3-Discovery",why:"Curated question sets per archetype — output of the bootcamp Day 1 discovery activity. Best questions from the session go here. Living document: updated after each observed cert call.",modified:null,loc:null},
+  {id:"ib1a8",sec:"Internal",stage:"",sub:"Bootcamp & Certification",aud:"internal",status:"build",name:"Disruptive question bank",url:null,sf:"3-Discovery",why:"Output of bootcamp Day 1 disruptive questions activity. Organized by ICP track and three-forces category. Feeds the Highspot discovery question bank. Living document.",modified:null,loc:null},
+  // ── Missing Corporate Proof Point Assets ─────────────────────────────
+  {id:"c2b1",sec:"Corporate ICP",stage:"2",sub:"2 — Consideration",aud:"external",status:"in_review",name:"IFRS 16 remeasurement one-pager",url:null,sf:"3-Discovery",why:"Mark archetype's primary pain. The 6-doc ASC 842 series covers US GAAP but there's no standalone IFRS 16 one-pager. Deploy when Mark mentions remeasurement volume or audit exposure. Pending PMM review.",modified:null,loc:null},
+  {id:"c2b2",sec:"Corporate ICP",stage:"2",sub:"2 — Consideration",aud:"external",status:"in_review",name:"Lease-utilization mismatch overview",url:null,sf:"3-Discovery",why:"Emily/Lauren archetype asset. The $2.1M proof point needs a shareable external one-pager. 'You're paying for space your people aren't using — here's how clients find and act on that gap.' Pending PMM review.",modified:null,loc:null},
+  {id:"c2b3",sec:"Corporate ICP",stage:"2",sub:"2 — Consideration",aud:"external",status:"in_review",name:"CAM recovery / $600K billing error proof point card",url:null,sf:"3-Discovery",why:"Mark and Taylor archetype. The $600K story exists inside the E&S Exchange deck but has no standalone shareable leave-behind. High-impact after a compliance-focused discovery call. Pending PMM final review.",modified:null,loc:null},
+  {id:"c1b1",sec:"Corporate ICP",stage:"1",sub:"1 — Awareness",aud:"external",status:"in_review",name:"Data center / infrastructure lessee one-pager",url:null,sf:"1-Prospecting",why:"Emerging ICP. Champion is Controller/VP Finance (not RE). Driver is ASC 842/IFRS 16 for complex infrastructure leases — phased commencement, IRUs, equipment leases. Different motion than standard Corporate. Pending ICP validation.",modified:null,loc:null},
+  // ── Missing Retail Proof Point / Tool Assets ──────────────────────────
+  {id:"r2b1",sec:"Retail ICP",stage:"2",sub:"2 — Consideration",aud:"external",status:"in_review",name:"CAM recovery proof point card — Retail",url:null,sf:"3-Discovery",why:"Taylor (Retail Risk & Governance) archetype. The $600K billing error is the strongest Retail proof point but lives buried in the E&S deck. Needs a standalone shareable asset. Pending PMM review.",modified:null,loc:null},
+  {id:"r2b2",sec:"Retail ICP",stage:"2",sub:"2 — Consideration",aud:"external",status:"build",name:"Site selection ROI calculator",url:null,sf:"3-Discovery",why:"Alex (Strategy Driver) archetype's #1 requested tool. When a prospect asks 'what's the ROI on better site selection?', sellers need a model not just a story. Separate from E&S ROI calculator.",modified:null,loc:null},
+
+];
+
+const STORAGE_KEY='tango-dashboard-progress-v1';
+let progress={};
+let currentView='list';
+let openWhy=new Set();
+const BC={have:'b-have',build:'b-build',urgent:'b-urgent',revise:'b-revise',in_review:'b-review'};
+const BS={have:'&#10003;',build:'&#9675;',urgent:'!',revise:'&#9998;',in_review:'&#9676;'};
+function defaultState(s){return{have:'ready',revise:'needs_revision',urgent:'not_built',build:'not_started',in_review:'in_review'}[s]||'not_started';}
+function stateOptions(s){
+  if(s==='have')return[['ready','Ready for use'],['in_progress','In progress'],['done','Archived / replaced']];
+  if(s==='revise')return[['needs_revision','Needs revision'],['in_progress','In progress'],['done','Revision done']];
+  if(s==='in_review')return[['in_review','Pending approval'],['in_progress','In progress'],['done','Approved — live']];
+  if(s==='urgent')return[['not_built','Not built yet'],['in_progress','In progress'],['done','Done — shipped']];
+  return[['not_started','Not started'],['in_progress','In progress'],['done','Done — shipped']];
+}
+function stateClass(v){return{ready:'ps-ready',needs_revision:'ps-needs',not_built:'ps-notbuilt',in_progress:'ps-wip',done:'ps-done',in_review:'ps-review'}[v]||'';}
+function saveProgress(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(progress));}catch(e){}}
+function loadProgress(){try{const d=localStorage.getItem(STORAGE_KEY);if(d)progress=JSON.parse(d);}catch(e){}}
+function getFiltered(){
+  const q=(document.getElementById('search')||{}).value?.toLowerCase()||'';
+  const fs=document.getElementById('f-section')?.value||'';
+  const fst=document.getElementById('f-stage')?.value||'';
+  const fss=document.getElementById('f-status')?.value||'';
+  const fp=document.getElementById('f-progress')?.value||'';
+  const faud=document.getElementById('f-aud')?.value||'';
+  return ASSETS.filter(a=>{
+    if(fs&&a.sec!==fs)return false;
+    if(fst&&a.stage!==fst)return false;
+    if(fss&&a.status!==fss)return false;
+    if(fp&&(progress[a.id]||defaultState(a.status))!==fp)return false;
+    if(faud&&(a.aud||(a.sec==='Internal'?'internal':'external'))!==faud)return false;
+    if(q&&!a.name.toLowerCase().includes(q))return false;
+    return true;
+  });
+}
+function renderStats(){
+  const total=ASSETS.length;
+  const have=ASSETS.filter(a=>a.status==='have').length;
+  const build=ASSETS.filter(a=>a.status==='build').length;
+  const urgent=ASSETS.filter(a=>a.status==='urgent').length;
+  const revise=ASSETS.filter(a=>a.status==='revise').length;
+  const review=ASSETS.filter(a=>a.status==='in_review').length;
+  document.getElementById('stat-row').innerHTML=`
+    <div class="stat"><div class="stat-val">${total}</div><div class="stat-lbl">Total assets</div></div>
+    <div class="stat"><div class="stat-val" style="color:#27500A">${have}</div><div class="stat-lbl">&#10003; Have it</div><div class="stat-bar"><div class="stat-fill" style="width:${Math.round(have/total*100)}%;background:#97C459"></div></div></div>
+    <div class="stat"><div class="stat-val" style="color:#1B3A5C">${review}</div><div class="stat-lbl">&#9676; In Review</div><div class="stat-bar"><div class="stat-fill" style="width:${Math.round(review/total*100)}%;background:#6B9EC8"></div></div></div>
+    <div class="stat"><div class="stat-val" style="color:#791F1F">${urgent}</div><div class="stat-lbl">! Urgent EOQ2</div><div class="stat-bar"><div class="stat-fill" style="width:${Math.round(urgent/total*100)}%;background:#F09595"></div></div></div>
+    <div class="stat"><div class="stat-val" style="color:#854F0B">${revise}</div><div class="stat-lbl">&#9998; Revise</div><div class="stat-bar"><div class="stat-fill" style="width:${Math.round(revise/total*100)}%;background:#EF9F27"></div></div></div>
+    <div class="stat"><div class="stat-val" style="color:#633806">${build}</div><div class="stat-lbl">&#9675; Build</div><div class="stat-bar"><div class="stat-fill" style="width:${Math.round(build/total*100)}%;background:#FAC775"></div></div></div>`;
+  const actionable=ASSETS.filter(a=>a.status!=='have');
+  const done=actionable.filter(a=>(progress[a.id]||defaultState(a.status))==='done').length;
+  const wip=actionable.filter(a=>(progress[a.id]||defaultState(a.status))==='in_progress').length;
+  const pct=actionable.length?Math.round(done/actionable.length*100):0;
+  document.getElementById('prog-row').innerHTML=`
+    <div class="prog-card"><div class="prog-lbl">Build &amp; revise progress (${actionable.length} action items)</div><div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:#1D9E75"></div></div><div class="prog-count">${done} of ${actionable.length} complete (${pct}%)</div></div>
+    <div class="prog-card"><div class="prog-lbl">In progress</div><div class="prog-track"><div class="prog-fill" style="width:${actionable.length?Math.round(wip/actionable.length*100):0}%;background:#378ADD"></div></div><div class="prog-count">${wip} actively being worked</div></div>
+    <div class="prog-card"><div class="prog-lbl">Remaining</div><div class="prog-track"><div class="prog-fill" style="width:${actionable.length?Math.round((actionable.length-done-wip)/actionable.length*100):0}%;background:#B4B2A9"></div></div><div class="prog-count">${actionable.length-done-wip} not yet started</div></div>`;
+  const urg=ASSETS.filter(a=>a.status==='urgent');
+  const eob=document.getElementById('eob');
+  if(urg.length){eob.style.display='flex';document.getElementById('eob-text').innerHTML=`<strong>${urg.length} assets must ship before EOQ2:</strong> ${urg.map(a=>a.name).join(' &middot; ')}`;}
+  else eob.style.display='none';
+}
+function metaBlock(a){
+  if(!a.modified&&!a.loc)return'';
+  let rows='';
+  if(a.modified)rows+=`<div class="meta-row"><svg class="ti ti-calendar" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2"/><line x1="16" y1="3" x2="16" y2="7"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="4" y1="11" x2="20" y2="11"/><line x1="11" y1="15" x2="12" y2="15"/><line x1="12" y1="15" x2="12" y2="18"/></svg><span class="meta-label">Modified&nbsp;</span><span class="meta-val">${a.modified}</span></div>`;
+  if(a.loc)rows+=`<div class="meta-row"><svg class="ti ti-folder" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l3 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2"/></svg><span class="meta-label">Location&nbsp;</span><span class="meta-val">${a.loc}</span></div>`;
+  return`<div class="asset-meta-block">${rows}</div>`;
+}
+function assetCard(a){
+  const p=progress[a.id]||defaultState(a.status);
+  const opts=stateOptions(a.status);
+  const nameHtml=a.url?`<a href="${a.url}" target="_blank" rel="noopener">${a.name} <svg class="ti ti-external-link" style="font-size:11px" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 7H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2v-5"/><line x1="10" y1="14" x2="20" y2="4"/><polyline points="15 4 20 4 20 9"/></svg></a>`:`<span class="no-link">${a.name}</span>`;
+  const stageBadge=a.stage?`<span class="tag tag-stage">Stage ${a.stage}</span>`:'';
+  const aud=a.aud||(a.sec==='Internal'?'internal':'external');
+  const audBadge=aud==='internal'?'<span class="tag-internal">Internal only</span>':'';
+  const isOpen=openWhy.has(a.id);
+  return`<div class="asset-card" id="card-${a.id}">
+    <div class="asset-top">
+      <div class="badge ${BC[a.status]}">${BS[a.status]}</div>
+      <div class="asset-main">
+        <div class="asset-title">${nameHtml}</div>
+        <div class="tag-row">
+          <span class="tag tag-sf"><svg class="ti ti-chart-bar" style="font-size:11px;vertical-align:-1px" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="12" width="6" height="8" rx="1"/><rect x="9" y="8" width="6" height="12" rx="1"/><rect x="15" y="4" width="6" height="16" rx="1"/><line x1="4" y1="20" x2="18" y2="20"/></svg> ${a.sf}</span>
+          ${stageBadge}
+          <span class="tag tag-section">${a.sec}</span>
+          ${audBadge}
+        </div>
+        <button class="why-btn${isOpen?' open':''}" onclick="toggleWhy('${a.id}')" aria-expanded="${isOpen}">
+          <svg class="ti ti-chevron-down" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg><span>When to use</span>
+        </button>
+        <div class="why-box${isOpen?' open':''}" id="why-${a.id}">${a.why}</div>
+      </div>
+      <div class="asset-right">
+        <select class="prog-sel ${stateClass(p)}" onchange="updateProgress('${a.id}',this.value)">${opts.map(([v,l])=>`<option value="${v}"${p===v?' selected':''}>${l}</option>`).join('')}</select>
+        ${metaBlock(a)}
+      </div>
+    </div>
+  </div>`;
+}
+function toggleWhy(id){
+  openWhy.has(id)?openWhy.delete(id):openWhy.add(id);
+  const isOpen=openWhy.has(id);
+  const btn=document.querySelector(`#card-${id} .why-btn`);
+  const box=document.getElementById(`why-${id}`);
+  if(btn){btn.classList.toggle('open',isOpen);btn.setAttribute('aria-expanded',isOpen);}
+  if(box)box.classList.toggle('open',isOpen);
+}
+function renderList(filtered){
+  if(!filtered.length)return`<div class="empty-state"><svg class="ti ti-search" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="10" r="7"/><line x1="21" y1="21" x2="15" y2="15"/></svg>No assets match the current filters</div>`;
+  const groups={};
+  filtered.forEach(a=>{const k=a.sec+(a.sub?' / '+a.sub:'');if(!groups[k])groups[k]=[];groups[k].push(a);});
+  return'<div class="body">'+Object.entries(groups).map(([k,items])=>`<div class="section-block"><div class="section-title">${k} <span style="font-weight:400;opacity:.6">(${items.length})</span></div>${items.map(assetCard).join('')}</div>`).join('')+'</div>';
+}
+function renderBoard(filtered){
+  const cols={have:[],in_review:[],urgent:[],revise:[],build:[]};
+  filtered.forEach(a=>{if(cols[a.status])cols[a.status].push(a);});
+  const labels={have:'&#10003; Have it',in_review:'&#9676; In Review',urgent:'! Urgent EOQ2',revise:'&#9998; Revise',build:'&#9675; Build'};
+  const hCls={have:'bh-have',in_review:'bh-review',urgent:'bh-urgent',revise:'bh-revise',build:'bh-build'};
+  return'<div class="board-wrap">'+Object.entries(cols).map(([k,items])=>`<div><div class="board-col-head ${hCls[k]}">${labels[k]} <span style="font-weight:400">(${items.length})</span></div>${items.map(a=>`<div class="board-item"><div class="board-item-name">${a.url?`<a href="${a.url}" target="_blank" rel="noopener">${a.name}</a>`:a.name}</div><div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px"><span class="tag tag-sf" style="font-size:10px;padding:1px 6px">${a.sf}</span><span class="tag tag-section" style="font-size:10px;padding:1px 6px">${a.sec}</span></div>${a.modified?`<div class="board-item-date"><svg class="ti ti-calendar" style="font-size:10px" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2"/><line x1="16" y1="3" x2="16" y2="7"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="4" y1="11" x2="20" y2="11"/><line x1="11" y1="15" x2="12" y2="15"/><line x1="12" y1="15" x2="12" y2="18"/></svg> ${a.modified}${a.loc?' &middot; '+a.loc:''}</div>`:''}</div>`).join('')}${!items.length?`<div style="font-size:12px;color:#888;padding:10px 0">None in current filter</div>`:''}</div>`).join('')+'</div>';
+}
+function priorityCard(a,borderColor,bCls){
+  const p=progress[a.id]||defaultState(a.status);
+  const opts=stateOptions(a.status);
+  const isOpen=openWhy.has(a.id+'p');
+  return`<div class="priority-card" style="border-left-color:${borderColor}" id="card-${a.id}p">
+    <div class="badge ${bCls}">${BS[a.status]}</div>
+    <div class="asset-main">
+      <div class="asset-title">${a.url?`<a href="${a.url}" target="_blank" rel="noopener">${a.name} <svg class="ti ti-external-link" style="font-size:11px" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 7H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2v-5"/><line x1="10" y1="14" x2="20" y2="4"/><polyline points="15 4 20 4 20 9"/></svg></a>`:`<span class="no-link">${a.name}</span>`}</div>
+      <div class="tag-row"><span class="tag tag-sf">${a.sf}</span><span class="tag tag-section">${a.sec}</span></div>
+      <button class="why-btn${isOpen?' open':''}" onclick="toggleWhy2('${a.id}p','why-p${a.id}')"><svg class="ti ti-chevron-down" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg><span>When to use</span></button>
+      <div class="why-box${isOpen?' open':''}" id="why-p${a.id}">${a.why}</div>
+    </div>
+    <div class="asset-right">
+      <select class="prog-sel ${stateClass(p)}" onchange="updateProgress('${a.id}',this.value)">${opts.map(([v,l])=>`<option value="${v}"${p===v?' selected':''}>${l}</option>`).join('')}</select>
+      ${metaBlock(a)}
+    </div>
+  </div>`;
+}
+function toggleWhy2(key,boxId){
+  openWhy.has(key)?openWhy.delete(key):openWhy.add(key);
+  const isOpen=openWhy.has(key);
+  const box=document.getElementById(boxId);
+  if(box)box.classList.toggle('open',isOpen);
+  const card=box?.closest('.priority-card');
+  const btn=card?.querySelector('.why-btn');
+  if(btn){btn.classList.toggle('open',isOpen);btn.setAttribute('aria-expanded',isOpen);}
+}
+function renderPriority(){
+  const urgent=ASSETS.filter(a=>a.status==='urgent');
+  const revise=ASSETS.filter(a=>a.status==='revise');
+  const review=ASSETS.filter(a=>a.status==='in_review');
+  return`<div class="priority-wrap">
+    <div class="priority-section">
+      <div class="priority-hdr ph-urgent"><svg class="ti ti-alert-triangle" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4m0 3v.01M2.5 19h19a2 2 0 0 0 1.7-3l-9.5-16a2 2 0 0 0-3.4 0l-9.5 16A2 2 0 0 0 2.5 19"/></svg> ${urgent.length} assets must ship before EOQ2</div>
+      ${urgent.map(a=>priorityCard(a,'#E24B4A','b-urgent')).join('')}
+    </div>
+    <div class="priority-section">
+      <div class="priority-hdr ph-revise"><svg class="ti ti-pencil" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L18.5 9.5a1.5 1.5 0 0 0-4-4L4 16v4"/><line x1="13.5" y1="6.5" x2="17.5" y2="10.5"/></svg> ${revise.length} assets need revision before use</div>
+      ${revise.map(a=>priorityCard(a,'#EF9F27','b-revise')).join('')}
+    </div>
+    <div class="priority-section">
+      <div class="priority-hdr" style="background:#EEF2F8;color:#1B3A5C"><svg class="ti ti-clock" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg> ${review.length} assets pending final approval</div>
+      ${review.map(a=>priorityCard(a,'#6B9EC8','b-review')).join('')}
+    </div>
+  </div>`;
+}
+function render(){
+  renderStats();
+  const filtered=getFiltered();
+  document.getElementById('result-count').textContent=filtered.length+' of '+ASSETS.length+' assets';
+  if(currentView==='list')document.getElementById('main').innerHTML=renderList(filtered);
+  else if(currentView==='board')document.getElementById('main').innerHTML=renderBoard(filtered);
+  else document.getElementById('main').innerHTML=renderPriority();
+}
+function setView(v){
+  currentView=v;
+  ['list','board','priority'].forEach(x=>{const b=document.getElementById('vbtn-'+x);if(b)b.classList.toggle('active',x===v);});
+  render();
+}
+function updateProgress(id,val){
+  progress[id]=val;
+  document.querySelectorAll('select[onchange*="\''+id+'\'"]').forEach(s=>{s.className='prog-sel '+stateClass(val);});
+  saveProgress();
+  renderStats();
+}
+loadProgress();
+render();
+</script>
+</body>
+</html>
